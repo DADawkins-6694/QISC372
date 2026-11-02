@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log In</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="login-page">
+<h1>Log In</h1>
+<p><a href="original.html">Back to Clock In / Out</a></p>
+
+<main class="panel records-panel">
+  <div class="admin-box">
+    <h2>Editing Access</h2>
+    <p>Enter your editing credentials to continue to Hours Tracking.</p>
+    <form class="admin-row" id="adminLoggedOut" onsubmit="event.preventDefault(); handleAdminLogin();">
+      <div class="field">
+        <label for="adminUser">Username</label>
+        <input type="text" id="adminUser" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="adminPass">Password</label>
+        <input type="password" id="adminPass" autocomplete="current-password" required>
+      </div>
+      <button type="submit">Log In</button>
+      <span class="status-msg" id="adminStatus" role="status"></span>
+    </form>
+  </div>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>

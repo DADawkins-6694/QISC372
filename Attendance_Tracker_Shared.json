@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "updatedAt": 0,
+  "records": [],
+  "notes": {},
+  "absences": [],
+  "overtimeSettings": {
+    "weeklyThreshold": 40,
+    "warnWithin": 5
+  },
+  "columnWidths": null
+}

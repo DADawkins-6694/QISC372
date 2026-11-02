@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team Attendance Tracker</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  
+  <img src="QI-EL-Combo-Photo.png" 
+       alt="Quality Inn Logo" class="tracker-logo">
+  
+<h1>Team Attendance Tracker</h1>
+
+<div class="layout">
+  <div class="panel" id="clockInPanel">
+    <h2>Clock In</h2>
+    <div class="field">
+      <label for="inName">Your Name</label>
+      <select id="inName">
+        <option value="">Select your name</option>
+        <option value="Dan">Dan</option>
+        <option value="Brandi">Brandi</option>
+        <option value="Courtney">Courtney</option>
+        <option value="Janine">Janine</option>
+        <option value="Jessica">Jessica</option>
+        <option value="JJ">JJ</option>
+        <option value="Monique">Monique</option>
+        <option value="Nikki">Nikki</option>
+        <option value="Skittles">Skittles</option>
+        <option value="Stephanie">Stephanie</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <button class="btn-in" onclick="handleClockIn()">Clock In</button>
+    <div class="status-msg" id="inStatus"></div>
+  </div>
+
+  <div class="panel" id="clockOutPanel">
+    <h2>Clock Out</h2>
+    <div class="field">
+      <label for="outName">Your Name</label>
+      <select id="outName">
+        <option value="">No one is clocked in</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="outDesc">What did you work on?</label>
+      <input type="text" id="outDesc" placeholder="Brief work description" autocomplete="off">
+    </div>
+    <button class="btn-out" onclick="handleClockOut()">Clock Out</button>
+    <div class="status-msg" id="outStatus"></div>
+  </div>
+  
+</div>
+  <div class="ot-box">
+  <div class="ot-box" id="currentlyInBox">
+    <h3>Currently Clocked In</h3>
+    <p>
+      Everyone with an open clock-in and no matching clock-out yet.
+    </p>
+    <div class="alert-list" id="currentlyInList"></div>
+    <div class="ot-week-summary" id="currentlyInCount"></div>
+  </div>
+
+  <div class="modal-overlay" id="clockOutModalOverlay" >
+    <div class="modal-box">
+      <h3>Admin Clock Out</h3>
+      <p id="clockOutModalName"></p>
+      <div class="field">
+        <label for="clockOutUser">Username</label>
+        <input type="text" id="clockOutUser" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="clockOutPass">Password</label>
+        <input type="password" id="clockOutPass" autocomplete="off">
+      </div>
+      <div class="status-msg error" id="clockOutModalStatus"></div>
+      <div class="modal-actions">
+        <button class="btn-out" onclick="submitAdminClockOut()">Clock Out</button>
+        <button class="btn-cancel" onclick="closeAdminClockOutModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="approvalModalOverlay" >
+    <div class="modal-box">
+      <h3>Manager Approval</h3>
+      <p id="approvalModalText"></p>
+      <div class="field">
+        <label for="approvalPass">Manager password</label>
+        <input type="password" id="approvalPass" autocomplete="off">
+      </div>
+      <div class="status-msg error" id="approvalModalStatus"></div>
+      <div class="modal-actions">
+        <button class="btn-in" id="approvalSubmitBtn" onclick="submitApproval()">Confirm</button>
+        <button class="btn-cancel" onclick="closeApprovalModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="panel records-panel">
+    <div class="admin-box">
+    <h3>Editing Access</h3>
+    <p>
+      Records are visible to everyone, but only an editor who logs in below can change the Attendance Records table (including notes) or adjust its column widths. 
+    </p>
+    <div class="admin-row" id="adminLoggedOut">
+      <input type="text" id="adminUser" placeholder="Username" autocomplete="off">
+      <input type="password" id="adminPass" placeholder="Password" autocomplete="off">
+      <button onclick="handleAdminLogin()">Unlock Editing</button>
+      <span class="status-msg" id="adminStatus"></span>
+    </div>
+    <div class="admin-row" id="adminLoggedIn" >
+      <span>Editing is unlocked on this device. Drag the edge of a column title to resize it.</span>
+      <button onclick="resetColumnWidths()">Reset Column Widths</button>
+      <button onclick="handleAdminLogout()">Lock</button>
+    </div>
+  </div>
+
+  <div class="records-header">
+    <h2>Attendance Records (last 90 days)</h2>
+    <div class="controls">
+      <button onclick="setSort('name')">Sort by Name</button>
+      <button onclick="setSort('time')">Sort by Date/Time</button>
+      <button onclick="openAddShiftModal()">Add Shift</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="recordsTable">
+      <colgroup>
+        <col><col><col><col><col><col><col><col>
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Mgmt<span class="col-resizer"></span></th>
+          <th onclick="setSort('name')">Name<span class="arrow" id="arrow-name"></span><span class="col-resizer"></span></th>
+          <th onclick="setSort('time')">Clock In<span class="arrow" id="arrow-time"></span><span class="col-resizer"></span></th>
+          <th>Clock Out<span class="col-resizer"></span></th>
+          <th>Description<span class="col-resizer"></span></th>
+          <th>Hours<span class="col-resizer"></span></th>
+          <th>Notes<span class="col-resizer"></span></th>
+          <th>Actions<span class="col-resizer"></span></th>
+        </tr>
+      </thead>
+      <tbody id="recordsBody"></tbody>
+    </table>
+  </div>
+  <div class="record-count" id="recordCount"></div>
+</div>
+
+<div class="panel records-panel" id="absencesPanel">
+  <div class="records-header">
+    <h2>Absences</h2>
+    <button type="button" class="btn-clockout" onclick="openAbsenceModal()">Add Absence</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th >Name</th>
+          <th >Date</th>
+          <th >Shift</th>
+          <th >Management Entry Name</th>
+          <th >Actions</th>
+        </tr>
+      </thead>
+      <tbody id="absencesBody"></tbody>
+    </table>
+  </div>
+  <div class="record-count" id="absenceCount"></div>
+</div>
+
+<div class="modal-overlay" id="adminAuthOverlay" >
+  <div class="modal-box">
+    <h3 id="adminAuthTitle">Confirm</h3>
+    <p id="adminAuthText"></p>
+    <div class="field">
+      <label for="adminAuthUser">Username</label>
+      <input type="text" id="adminAuthUser" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="adminAuthPass">Password</label>
+      <input type="password" id="adminAuthPass" autocomplete="off">
+    </div>
+    <div class="status-msg error" id="adminAuthStatus"></div>
+    <div class="modal-actions">
+      <button class="btn-out" onclick="submitAdminAuth()">Confirm</button>
+      <button class="btn-cancel" onclick="closeAdminAuthModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addShiftOverlay" >
+  <div class="modal-box add-shift-modal-box">
+    <h3>Add Shift</h3>
+    <p>Add a completed shift (clock-in and clock-out) to the Attendance Records.</p>
+    <div class="field">
+      <label for="addShiftName">Name</label>
+      <select id="addShiftName"></select>
+    </div>
+    <div class="field">
+      <label for="addShiftIn">Clock In</label>
+      <input type="datetime-local" id="addShiftIn">
+    </div>
+    <div class="field">
+      <label for="addShiftOut">Clock Out</label>
+      <input type="datetime-local" id="addShiftOut">
+    </div>
+    <div class="field">
+      <label for="addShiftDesc">Description (optional)</label>
+      <input type="text" id="addShiftDesc" autocomplete="off">
+    </div>
+    <div id="addShiftCreds">
+      <div class="field">
+        <label for="addShiftUser">Username</label>
+        <input type="text" id="addShiftUser" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="addShiftPass">Password</label>
+        <input type="password" id="addShiftPass" autocomplete="off">
+      </div>
+    </div>
+    <div class="status-msg error" id="addShiftStatus"></div>
+    <div class="modal-actions">
+      <button class="btn-in" onclick="submitAddShift()">Add Shift</button>
+      <button class="btn-cancel" onclick="closeAddShiftModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+  <div class="ot-box">
+    <h3>Overtime Alerts</h3>
+    <p>
+      Warns when someone is approaching or has passed a weekly overtime threshold, based on completed
+      shifts already in the table above (MondayÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œSunday business week).
+    </p>
+    <div class="settings-row">
+      <label for="otThreshold">Weekly overtime threshold (hours):</label>
+      <input type="number" id="otThreshold" min="1" step="0.5">
+      <label for="otWarnWithin">Warn when within (hours):</label>
+      <input type="number" id="otWarnWithin" min="0" step="0.5">
+      <button onclick="handleSaveOtSettings()">Save</button>
+      <span class="status-msg" id="otSettingsStatus"></span>
+    </div>
+    <div id="otAlertsList" class="alert-list"></div>
+    <div class="ot-week-summary" id="otWeekSummary"></div>
+  </div>
+
+<div class="filter-box">
+    <h3>Filtered Excel Reports</h3>
+    <div class="filter-group">
+      <label for="weekPickerDate">Business week (MonÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œSun) containing:</label>
+      <input type="date" id="weekPickerDate">
+      <button onclick="exportBusinessWeek()">Export Week</button>
+    </div>
+    <div class="filter-group">
+      <label for="rangeStart">Date range:</label>
+      <input type="date" id="rangeStart">
+      <span>to</span>
+      <input type="date" id="rangeEnd">
+      <button onclick="exportDateRange()">Export Range</button>
+    </div>
+    <div class="filter-group">
+      <label for="daysSelect">Pre-Selected Day Range:</label>
+      <select id="daysSelect">
+        <option value="90">90 days</option>
+        <option value="60">60 days</option>
+        <option value="45">45 days</option>
+        <option value="30" selected>30 days</option>
+        <option value="28">28 days</option>
+        <option value="21">21 days</option>
+        <option value="14">14 days</option>
+        <option value="7">7 days</option>
+      </select>
+      <button onclick="exportLastNDays()">Export</button>
+    </div>
+  </div>
+
+  <div class="payroll-box">
+    <h3>Payroll Export</h3>
+    <p>
+      Summarizes each employee's hours over a pay period, with overtime already split out per business week
+      (using the threshold set above in Overtime Alerts) ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â no manual math is needed. 
+      <strong>Column layout isn't matched to a specific payroll provider, but this can be changed.</strong>
+    </p>
+    <div class="settings-row">
+      <label for="payrollStart">Pay period:</label>
+      <input type="date" id="payrollStart">
+      <span>to</span>
+      <input type="date" id="payrollEnd">
+      <button onclick="exportPayrollCsv()">Export CSV</button>
+      <button onclick="exportPayrollPdf()">Export PDF</button>
+    </div>
+  </div>
+
+   <div class="autosave-box">
+    <h3>Auto-save to Excel (daily backup at 10:00 AM)</h3>
+    <p>
+      Choose a folder once below
+      (e.g. navigate to <strong>C:\QualityInnTracker\</strong> in the picker) and this page will remember
+      it and write a new .xlsx file there every day at 10:00 AM, as long as this tab stays open in Chrome or Edge.
+      Each file is named like "<strong>(YYYY-MM-DD_HH-MM)</strong>Attendance_Tracker.xlsx" (using 24-hour time, and hyphens
+      used in place of colons). Clock-in and clock-out entries for
+      the same person are combined onto one line when the clock-out falls within 12 hours of the clock-in. If the folder
+      isn't available, or you're on a browser without this support, the export will fall back to a normal file download instead.
+    </p>
+    <div class="autosave-actions">
+      <button onclick="chooseSaveFolder()">Choose Auto-Save Folder</button>
+      <button onclick="exportToXlsx(false)">Export Now</button>
+      <span id="folderStatus">No auto-save folder selected yet.</span>
+    </div>
+    <div class="status-msg" id="exportStatus"></div>
+  </div>
+  
+    
+    
+    
+    
+<div class="modal-overlay" id="absenceModalOverlay" >
+  <div class="modal-box absence-modal-box">
+    <h3>Add Absence</h3>
+    <p>Enter the absence details, then your management username and password.</p>
+    <div class="field">
+      <label for="absenceName">Name</label>
+      <select id="absenceName"></select>
+    </div>
+    <div class="field">
+      <label for="absenceDate">Date</label>
+      <input type="date" id="absenceDate">
+    </div>
+    <div class="field">
+      <label for="absenceShift">Shift</label>
+      <input type="text" id="absenceShift" list="absenceShiftList" autocomplete="off">
+      <datalist id="absenceShiftList">
+        <option value="Morning"></option>
+        <option value="Afternoon"></option>
+        <option value="Evening"></option>
+        <option value="Overnight"></option>
+      </datalist>
+    </div>
+    <div class="field">
+      <label for="absenceMgmtName">Management Entry Name</label>
+      <input type="text" id="absenceMgmtName" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="absenceUser">Username</label>
+      <input type="text" id="absenceUser" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="absencePass">Password</label>
+      <input type="password" id="absencePass" autocomplete="off">
+    </div>
+    <div class="status-msg error" id="absenceModalStatus"></div>
+    <div class="modal-actions">
+      <button class="btn-out" onclick="submitAbsence()">Add Absence</button>
+      <button class="btn-cancel" onclick="closeAbsenceModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+  
+<footer>
+  <p>This stand-alone system is not supported by Choice Hotels. </p>  
+  <p>For Technical Support and Inquiries, please email DADawkins.QualityInn@gmail.com.</p>
+  </footer>
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
