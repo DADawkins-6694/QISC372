@@ -225,15 +225,15 @@
    <div class="autosave-box">
     <h3>Shared Data File</h3>
     <p>
-      Select this app's OneDrive-synced folder on each computer. Attendance, notes, absences, and settings are saved in
+      Select the same Google Drive for desktop folder on each computer. Attendance, notes, absences, and settings are saved in
       <strong>Attendance_Tracker_Shared.json</strong> and checked for updates while this page is open. Avoid editing
       from both computers at the same time. Use the copy button to transfer this browser's existing data. Excel backups remain available below.
     </p>
     <div class="autosave-actions">
-      <button onclick="chooseSaveFolder()">Connect Shared Folder</button>
+      <button onclick="chooseSaveFolder()">Connect Google Drive Folder</button>
       <button onclick="copyBrowserDataToJson()">Copy Browser Data to JSON</button>
       <button onclick="exportToXlsx(false)">Export Now</button>
-      <span id="folderStatus">No shared folder connected yet.</span>
+      <span id="folderStatus">Choose a Google Drive for desktop folder to begin syncing.</span>
     </div>
     <div class="status-msg" id="exportStatus"></div>
   </div>

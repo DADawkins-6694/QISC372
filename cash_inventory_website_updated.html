@@ -8,6 +8,7 @@ header{background:#123e30;color:white;padding:28px clamp(18px,4vw,56px);display:
 main{max-width:1200px;margin:auto;padding:24px clamp(14px,3vw,36px) 60px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:20px}.stat,.panel{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:18px}.stat span{display:block;color:var(--muted);font-size:13px}.stat strong{display:block;font-size:25px;margin-top:4px}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}.tabs button,.btn{border:1px solid var(--line);border-radius:9px;padding:10px 14px;background:white;color:var(--ink);cursor:pointer;font:inherit}.tabs button.active,.btn.primary{background:var(--green);color:white;border-color:var(--green)}.btn{font-weight:600}.btn.danger{color:var(--red)}
 .panel{margin-bottom:18px}.panel h2{font-size:19px;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 16px;font-size:13px}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:580px}#movementTable{min-width:1040px}th{text-align:left;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em;background:#f7faf8}th,td{padding:10px 9px;border-bottom:1px solid var(--line)}td.num,th.num{text-align:right}.entry{width:105px;max-width:100%;padding:9px;border:1px solid #cbd8d0;border-radius:7px;text-align:right;font:inherit}.entry:focus,input:focus,select:focus,textarea:focus{outline:2px solid #8dc8aa;outline-offset:1px}.money{font-variant-numeric:tabular-nums;font-weight:600}.totalrow{background:var(--pale);font-weight:700}.otherrow input{width:100%}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.formgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}.field input,.field select,.field textarea{width:100%;border:1px solid #cbd8d0;border-radius:8px;padding:10px;font:inherit;background:white}.field textarea{min-height:40px;resize:vertical}.movement-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.coin-inputs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:14px}.coin-inputs .field label{font-size:12px}.hidden{display:none!important}.log-item{padding:12px 0;border-bottom:1px solid var(--line)}.log-item:last-child{border:0}.log-top{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap}.log-time{color:var(--muted);font-size:12px}.tag{display:inline-block;background:#edf3ef;border-radius:5px;padding:3px 7px;font-size:12px}.empty{color:var(--muted);padding:18px 0}.notice{background:#fff8e6;border:1px solid #f0dfaa;padding:12px;border-radius:9px;font-size:13px;margin-bottom:16px}
+.sync-error{color:var(--red)!important}
 @media(max-width:760px){.stats{grid-template-columns:1fr}.formgrid,.movement-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.coin-inputs{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:460px){.formgrid,.movement-grid{grid-template-columns:1fr}.coin-inputs{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media print{
 	@page{margin:12mm}
@@ -36,6 +37,7 @@ main{max-width:1200px;margin:auto;padding:24px clamp(14px,3vw,36px) 60px}.stats{
 <header><div class="header-copy"><div class="eyebrow"></div><h1>Cash Inventory & Reconciliation</h1><p>Record counts, Track cash movements, and Keep an auditable change history.</p></div><button class="btn print-button" type="button" onclick="window.print()">Print Screen</button></header>
 <main>
 <div class="stats"><div class="stat"><span>Cash drawer · actual total</span><strong id="drawerStat">$0.00</strong></div><div class="stat"><span>Safe · actual total</span><strong id="safeStat">$0.00</strong></div><div class="stat"><span>Changes logged</span><strong id="logStat">0</strong></div></div>
+<div class="panel"><h2>Shared Records</h2><p class="sub">Choose the same Google Drive for desktop folder on each computer. Counts, movements, and change history sync while this page is open.</p><div class="actions"><button class="btn primary" id="cash-sync-connect" type="button">Connect Google Drive Folder</button><span class="sub" id="cash-sync-status" role="status">Choose a shared Google Drive folder to begin syncing.</span></div></div>
 <div class="tabs"><button class="active" data-tab="inventory">Inventory counts</button><button data-tab="movement">Cash movements</button><button data-tab="history">Change log</button></div>
 <section id="inventory">
 <div class="panel"><h2>Cash drawer</h2><p class="sub">Enter the actual count for each denomination. Standard counts are editable too.</p><div class="table-wrap"><table><thead><tr><th>Denomination</th><th class="num">Face value</th><th class="num">Standard count</th><th class="num">Standard amount</th><th class="num">Actual count</th><th class="num">Actual amount</th></tr></thead><tbody id="drawerRows"></tbody><tfoot><tr class="totalrow"><td colspan="3">Total cash value</td><td class="num money" id="drawerStandard">$0.00</td><td></td><td class="num money" id="drawerActual">$0.00</td></tr></tfoot></table></div><div class="actions"><button class="btn primary" onclick="saveCounts('drawer')">Save drawer counts</button><button class="btn" onclick="resetActual('drawer')">Clear actual counts</button></div></div>
@@ -45,6 +47,7 @@ main{max-width:1200px;margin:auto;padding:24px clamp(14px,3vw,36px) 60px}.stats{
 <div class="panel"><h2>Movement register</h2><div class="table-wrap"><table id="movementTable"><thead><tr><th>Date</th><th>Reason</th><th>Handled by</th><th>Deposit / withdrawal</th><th class="num">$100</th><th class="num">$50</th><th class="num">$20</th><th class="num">$10</th><th class="num">$5</th><th class="num">$1</th><th class="num">$0.25</th><th class="num">$0.10</th><th class="num">$0.05</th><th class="num">TOT ($)</th></tr></thead><tbody id="movementRows"></tbody></table></div></div></section>
 <section id="history" class="hidden"><div class="panel"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div><h2>Change log</h2><p class="sub">A timestamped record of saved changes and cash movements.</p></div><button class="btn" onclick="exportLog()">Export log XLSX</button></div><div id="logEntries"></div></div></section>
 </main>
+<script src="shared-json-sync.js"></script>
 <script>
 const denominations=[["$100 bills",100],["$50 bills",50],["$20 bills",20],["$10 bills",10],["$5 bills",5],["$1 bills",1],["Quarters",.25],["Dimes",.10],["Nickels",.05]];
 const defaults=[0,0,4,0,16,33,16,20,20];
@@ -73,4 +76,37 @@ async function exportLog(){if(!state.log.length){alert(titleCase('There are no c
 function download(content,name,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();URL.revokeObjectURL(a.href)}
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x===b));['inventory','movement','history'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==b.dataset.tab))}));
 initMoveInputs();render();
+function cashHasLocalData(value){
+	return (value.log||[]).length>0||(value.movements||[]).length>0||['drawer','safe'].some(which=>{
+		let counts=value[which];
+		return counts&&(counts.other||JSON.stringify(counts.standard)!==JSON.stringify(defaults)||counts.actual.some(item=>item!==''&&Number(item)!==0));
+	});
+}
+function mergeCashEntries(remote,local){
+	let entries=new Map();
+	[...(remote||[]),...(local||[])].forEach(item=>{
+		let id=item.id||JSON.stringify(item);
+		if(!entries.has(id))entries.set(id,item);
+	});
+	return [...entries.values()].sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
+}
+window.cashInventorySharedSync=createSharedJsonSync({
+	appKey:'cash-inventory',
+	fileName:'Cash_Inventory_Shared.json',
+	buttonId:'cash-sync-connect',
+	statusId:'cash-sync-status',
+	getData:()=>state,
+	hasLocalData:cashHasLocalData,
+	isValid:value=>value&&value.drawer&&value.safe&&Array.isArray(value.movements)&&Array.isArray(value.log),
+	mergeData:(remote,local)=>({
+		...remote,
+		...local,
+		drawer:local.drawer||remote.drawer,
+		safe:local.safe||remote.safe,
+		movements:mergeCashEntries(remote.movements,local.movements),
+		log:mergeCashEntries(remote.log,local.log)
+	}),
+	setData:value=>{state=value;localStorage.setItem(key,JSON.stringify(state));render()}
+});
+window.cashInventorySharedSync.start();
 </script></body></html>

@@ -54,6 +54,7 @@ td input,td select{min-width:100px}
 tr.done{background:var(--ok)}
 .x{background:none;border:0;color:var(--bad);font-weight:600;padding:6px}
 .note{font-size:13px;color:var(--mute)}
+.sync-error{color:var(--bad)}
 .savebar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
 .savebar .btn{background:var(--brass);color:#fff;padding:11px 22px}
 .smsg{min-height:18px}
@@ -88,6 +89,10 @@ section.sec{width:40%}
     <button class="btn" id="out">Sign out</button>
   </header>
   <main>
+    <div class="savebar">
+      <button class="btn alt" id="hk-sync-connect" type="button">Connect Google Drive Folder</button>
+      <span class="note" id="hk-sync-status" role="status">Choose the same Google Drive for desktop folder on each computer.</span>
+    </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="t-log" aria-selected="true">Room log</button>
       <button class="tab" role="tab" id="t-sum" aria-selected="false">Daily summary</button>
@@ -121,6 +126,7 @@ section.sec{width:40%}
 </section>
 <datalist id="names"></datalist>
 
+<script src="shared-json-sync.js"></script>
 <script>
 function rng(a,b){var r=[];for(var i=a;i<=b;i+=2)r.push(i);return r}
 var SECTIONS=[
@@ -166,8 +172,10 @@ $("lf").addEventListener("submit",function(e){
 function enter(){
   $("login").classList.add("hide");$("app").classList.remove("hide");
   load();$("sd").value=today();$("gd").value=today();build();names();stats();sumRender();
+  if(window.housekeepingSharedSync)window.housekeepingSharedSync.start();
 }
 $("out").onclick=function(){
+  if(window.housekeepingSharedSync)window.housekeepingSharedSync.disconnect();
   try{sessionStorage.removeItem("hk_in")}catch(e){}
   $("app").classList.add("hide");$("login").classList.remove("hide");$("p").value="";$("err").textContent="";
 };
@@ -252,6 +260,26 @@ function sumRender(){
   }).join(""):'<tr><td colspan="3" class="note">No saved log for this date. Enter rooms on the Room log tab and press Save to log.</td></tr>';
 }
 $("sd").onchange=sumRender;
+
+window.housekeepingSharedSync=createSharedJsonSync({
+  appKey:"housekeeping",
+  fileName:"Housekeeping_Tracker_Shared.json",
+  buttonId:"hk-sync-connect",
+  statusId:"hk-sync-status",
+  hasLocalData:function(value){return Object.keys(value.rooms||{}).length>0||Object.keys(value.log||{}).length>0},
+  getData:function(){return {rooms:data,log:LOG}},
+  isValid:function(value){return value&&typeof value.rooms==="object"&&typeof value.log==="object"},
+  mergeData:function(remote,local){
+    var logs={},dates=Object.keys(remote.log||{}).concat(Object.keys(local.log||{}));
+    dates.forEach(function(date){logs[date]=Object.assign({},remote.log&&remote.log[date]||{},local.log&&local.log[date]||{})});
+    return {rooms:Object.assign({},remote.rooms||{},local.rooms||{}),log:logs};
+  },
+  setData:function(value){
+    data=value.rooms||{};LOG=value.log||{};
+    try{localStorage.setItem(KEY,JSON.stringify(data));localStorage.setItem(LKEY,JSON.stringify(LOG))}catch(e){}
+    build();names();stats();sumRender();avgRender();
+  }
+});
 
 try{if(sessionStorage.getItem("hk_in")==="1")enter()}catch(e){}
 </script>

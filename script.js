@@ -1639,15 +1639,15 @@ function scheduleSharedDataSave() {
     const el = document.getElementById('folderStatus');
     if (!el) return;
     el.textContent = sharedDataReady
-      ? `Shared data connected: "${saveDirHandle.name}/${SHARED_DATA_FILENAME}". Excel backups also save here.`
+      ? `Shared data connected: "${saveDirHandle.name}/${SHARED_DATA_FILENAME}". Google Drive for desktop syncs this file.`
       : saveDirHandle
         ? `Folder selected: "${saveDirHandle.name}". Reconnect it to enable shared data.`
-        : 'No shared folder connected. Select the same OneDrive-synced folder on each computer.';
+        : 'No shared folder connected. Select the same Google Drive for desktop folder on each computer.';
   }
 
   async function chooseSaveFolder() {
     if (!('showDirectoryPicker' in window)) {
-      alert('This browser does not support shared-folder access. Use Chrome or Edge to connect the same OneDrive-synced folder on each computer.');
+      alert('This browser does not support shared-folder access. Use Chrome or Edge with Google Drive for desktop.');
       return;
     }
     try {
