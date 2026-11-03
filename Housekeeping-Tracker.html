@@ -4,71 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Housekeeping Tracker</title>
-<style>
-:root{--bg:#eef2f2;--card:#fff;--ink:#12303a;--mute:#5d7279;--line:#d3dcde;--brass:#a97a2a;--ok:#e3f2ea;--bad:#c2503a;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1c20;--card:#17292f;--ink:#e6eef0;--mute:#93a9af;--line:#2a4249;--brass:#d6a64f;--ok:#1b3a30;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0f1c20;--card:#17292f;--ink:#e6eef0;--mute:#93a9af;--line:#2a4249;--brass:#d6a64f;--ok:#1b3a30;color-scheme:dark}
-*{box-sizing:border-box}
-html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.4 "Avenir Next","Segoe UI",Roboto,sans-serif}
-h1,h2,h3{font-family:Georgia,"Times New Roman",serif;margin:0}
-button,select,input{font:inherit;color:inherit}
-button{cursor:pointer}
-:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
-.hide{display:none!important}
-input,select{padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);width:100%}
-label{display:block;font-weight:600;margin:12px 0 4px;font-size:14px}
-.btn{background:var(--ink);color:var(--bg);border:0;border-radius:6px;padding:9px 14px;font-weight:600}
-.btn.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
-
-#login{min-height:100vh;display:grid;place-items:center;padding:20px}
-.lcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:32px;width:100%;max-width:360px;border-top:6px solid var(--brass)}
-.lcard h1{font-size:28px}
-.lcard p{color:var(--mute);margin:4px 0 12px}
-.lcard .btn{width:100%;margin-top:18px}
-.err{color:var(--bad);min-height:20px;margin-top:10px;font-size:14px}
-
-header{background:var(--ink);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
-header h1{font-size:20px;flex:1}
-header .btn{background:rgba(255,255,255,.16);color:#fff}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:#12303a;z-index:10}
-main{max-width:1000px;margin:0 auto;padding:16px 14px 60px}
-.tabs{display:flex;gap:6px;margin-bottom:12px}
-.tab{background:none;border:0;border-bottom:3px solid transparent;padding:8px 14px;font-weight:600;color:var(--mute)}
-.tab[aria-selected=true]{color:var(--ink);border-color:var(--brass)}
-.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:14px}
-.tools>div{flex:1;min-width:150px}
-.tools label{margin-top:0}
-.prog{font-size:14px;color:var(--mute);margin-bottom:12px}
-
-section.sec{margin-bottom:22px}
-.sec h3{font-size:17px;display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
-.sec h3 small{font:13px "Segoe UI",sans-serif;color:var(--mute)}
-.wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line)}
-th,td{padding:5px 8px;text-align:left;border-bottom:1px solid var(--line)}
-th{font-size:13px;color:var(--mute);font-weight:600}
-td.rm{font:700 18px Georgia,serif;width:70px}
-td input,td select{min-width:100px}
-tr.done{background:var(--ok)}
-.x{background:none;border:0;color:var(--bad);font-weight:600;padding:6px}
-.note{font-size:13px;color:var(--mute)}
-.sync-error{color:var(--bad)}
-.savebar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
-.savebar .btn{background:var(--brass);color:#fff;padding:11px 22px}
-.smsg{min-height:18px}
-.savebar .btn.alt{background:transparent;color:var(--ink)}
-#secs{display:flex;flex-wrap:wrap;column-gap:4%;align-items:flex-start}
-section.sec{width:40%}
-@media (max-width:700px){section.sec{width:100%}}
-.src{font-weight:600}
-.src a{color:var(--brass);text-decoration:underline;word-break:break-all}
-#v-avg th,#v-avg td{white-space:nowrap}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="housekeeping-page">
+<nav class="site-nav" aria-label="Main navigation">
+  <button class="site-nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="site-nav-links" title="Open navigation menu"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></button>
+  <div class="site-nav-links" id="site-nav-links" hidden>
+    <a href="index.html">Home</a>
+    <a href="cash_inventory_website_updated.html">Cash</a>
+    <a href="Housekeeping-Tracker.html" aria-current="page">Housekeeping</a>
+  </div>
+</nav>
 
 <section id="login">
   <form class="lcard" id="lf" autocomplete="off">
@@ -100,7 +46,7 @@ section.sec{width:40%}
     </div>
 
     <div id="v-log">
-      <div class="savebar"><button class="btn" data-save="1">Save to log</button><button class="btn alt" id="clr">Clear all</button><label for="gd" style="margin:0">Date</label><input type="date" id="gd" style="width:auto"><span class="smsg note" role="status"></span></div>
+      <div class="savebar"><button class="btn" data-save="1">Save to log</button><button class="btn alt" id="clr">Clear all</button><label for="gd" class="date-label">Date</label><input type="date" id="gd" class="date-input"><span class="smsg note" role="status"></span></div>
       <div class="prog" id="prog"></div>
       <div id="secs"></div>
       <div class="savebar"><button class="btn" data-save="1">Save to log</button><span class="smsg note" role="status"></span></div>
@@ -108,14 +54,14 @@ section.sec{width:40%}
 
     <div id="v-avg" class="hide">
       
-      <div class="note" id="avgnote" style="margin:6px 0 10px"></div>
+      <div class="note" id="avgnote" class="avg-note"></div>
       <div class="tools"><div><label for="avd">Date</label><input type="date" id="avd"></div></div>
       <div class="wrap"><table><thead><tr><th>Housekeeper</th><th>Clock in</th><th>Clock out</th><th>Total time clocked in</th><th>Rooms cleaned</th><th>Avg time per room</th></tr></thead><tbody id="ab"></tbody></table></div>
     </div>
     
 <div id="v-sum" class="hide">
       <div class="tools">
-        <div><label for="sd">Date</label><input type="date" id="sd"><div class="note" id="lk" style="margin-top:6px"></div></div>
+        <div><label for="sd">Date</label><input type="date" id="sd"><div class="note" id="lk" class="summary-note"></div></div>
       </div>
       <div class="wrap"><table>
         <thead><tr><th>Housekeeper</th><th>Rooms cleaned</th><th>Room numbers</th></tr></thead>
@@ -126,162 +72,6 @@ section.sec{width:40%}
 </section>
 <datalist id="names"></datalist>
 
-<script src="shared-json-sync.js"></script>
-<script>
-function rng(a,b){var r=[];for(var i=a;i<=b;i+=2)r.push(i);return r}
-var SECTIONS=[
- ["Quality 1st Floor – Even",rng(100,126)],
- ["Quality 1st Floor – Odd",rng(101,127)],
- ["Quality 2nd Floor – Even",rng(200,226)],
- ["Quality 2nd Floor – Odd",rng(201,227)],
- ["Econo 1st Floor",rng(128,158)],
- ["Econo 2nd Floor",rng(228,252)]
-];
-var KEY="hk_log_v2", LKEY="hk_saved_log_v1", data={}, LOG={};
-var HK=["a","b","c","d","e","f"];
-function sel(v,n){var l=HK.indexOf(v)<0&&v?HK.concat([v]):HK;
-  return '<select data-f="n" aria-label="Housekeeper for room '+n+'"><option value="">Select</option>'+l.map(function(x){return '<option value="'+esc(x)+'"'+(x==v?' selected':'')+'>'+esc(x)+'</option>'}).join("")+'</select>'}
-function $(id){return document.getElementById(id)}
-function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-function today(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
-function load(){try{data=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){data={}}
-  try{LOG=JSON.parse(localStorage.getItem(LKEY)||"{}")||{}}catch(e){LOG={}}}
-function saveLog(){try{localStorage.setItem(LKEY,JSON.stringify(LOG))}catch(e){}}
-function msg(t){document.querySelectorAll(".smsg").forEach(function(s){s.textContent=t})}
-function doSave(){
-  var D=$("gd").value||today(),fresh=[],skip=0;
-  Object.keys(data).forEach(function(n){var r=data[n];if(!r.n)return;if((LOG[D]||{})[n])skip++;else fresh.push(n)});
-  if(!fresh.length&&!skip){msg("Nothing to save. Enter a housekeeper name for at least one room.");return}
-  if(!confirm("Save "+fresh.length+" room(s) to the log? Saved entries are locked and cannot be changed."))return;
-  var at=new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
-  fresh.forEach(function(n){var r=data[n];(LOG[D]=LOG[D]||{})[n]={n:r.n,at:at}});
-  saveLog();data={};save();build();names();stats();$("sd").value=D;sumRender();
-  msg("Saved "+fresh.length+" room(s) for "+D+" at "+at+"."+(skip?" "+skip+" already locked for that date, so they were not changed.":"")+" See the Daily summary tab.");
-  window.scrollTo(0,0);
-}
-document.addEventListener("click",function(e){if(e.target.closest("[data-save]"))doSave()});
-function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}}
-
-$("lf").addEventListener("submit",function(e){
-  e.preventDefault();
-  if($("u").value.trim()==="hk"&&$("p").value==="hk"){
-    try{sessionStorage.setItem("hk_in","1")}catch(x){}
-    enter();
-  }else $("err").textContent="Username or password is incorrect. Try again.";
-});
-function enter(){
-  $("login").classList.add("hide");$("app").classList.remove("hide");
-  load();$("sd").value=today();$("gd").value=today();build();names();stats();sumRender();
-  if(window.housekeepingSharedSync)window.housekeepingSharedSync.start();
-}
-$("out").onclick=function(){
-  if(window.housekeepingSharedSync)window.housekeepingSharedSync.disconnect();
-  try{sessionStorage.removeItem("hk_in")}catch(e){}
-  $("app").classList.add("hide");$("login").classList.remove("hide");$("p").value="";$("err").textContent="";
-};
-function tab(w){
-  $("v-log").classList.toggle("hide",w!="log");$("v-sum").classList.toggle("hide",w!="sum");$("v-avg").classList.toggle("hide",w!="avg");
-  $("t-log").setAttribute("aria-selected",w=="log");$("t-sum").setAttribute("aria-selected",w=="sum");$("t-avg").setAttribute("aria-selected",w=="avg");
-  if(w=="sum")sumRender();if(w=="avg")avgRender();
-}
-$("t-log").onclick=function(){tab("log")};
-$("t-sum").onclick=function(){tab("sum")};
-$("t-avg").onclick=function(){tab("avg")};
-
-var NOTE='';
-function tfmt(m){var h=Math.floor(m/60),x=m%60,p=h>=12?'PM':'AM';h=h%12||12;return h+':'+('0'+x).slice(-2)+' '+p}
-function dur(m){return Math.floor(m/60)+' h '+('0'+(m%60)).slice(-2)+' min'}
-function attendance(d){
-  return HK.map(function(h,i){var s=450+(i*7)%30,e=s+480+((i*11)%40);return {n:h,i:s,o:e}})}
-function avgRender(){
-  if(!$('avd').value)$('avd').value=today();
-  var d=$('avd').value,day=LOG[d]||{},cnt={};
-  Object.keys(day).forEach(function(n){var h=day[n].n;cnt[h]=(cnt[h]||0)+1});
-  $('avgnote').textContent=NOTE+(Object.keys(day).length?'':' No rooms are saved for this date yet.');
-  var T=0,R=0,html='';
-  attendance(d).forEach(function(a){var m=a.o-a.i,c=cnt[a.n]||0;T+=m;R+=c;html+='<tr><td><b>'+esc(a.n)+'</b></td><td>'+tfmt(a.i)+'</td><td>'+tfmt(a.o)+'</td><td>'+dur(m)+'</td><td>'+c+'</td><td>'+(c?(m/c).toFixed(1)+' min':'\u2013')+'</td></tr>'});
-  html+='<tr><td><b>All</b></td><td></td><td></td><td>'+dur(T)+'</td><td>'+R+'</td><td>'+(R?(T/R).toFixed(1)+' min':'\u2013')+'</td></tr>';
-  $('ab').innerHTML=html;
-}
-$('avd').onchange=avgRender;
-
-function build(){
-  var h="";
-  SECTIONS.forEach(function(s,si){
-    h+='<section class="sec" data-si="'+si+'"><h3>'+s[0]+'<small id="c'+si+'"></small></h3><div class="wrap"><table><thead><tr><th>Room</th><th>Housekeeper</th><th></th></tr></thead><tbody>';
-    s[1].forEach(function(n){
-      var r=data[n]||{};
-      h+='<tr data-r="'+n+'" class="'+(r.n?"done":"")+'"><td class="rm">'+n+'</td><td>'+sel(r.n||"",n)+'</td><td><button class="x" data-x="1" aria-label="Clear room '+n+'">Clear</button></td></tr>';
-    });
-    h+='</tbody></table></div></section>';
-  });
-  $("secs").innerHTML=h;
-}
-function names(){
-  var seen={};Object.keys(data).forEach(function(n){if(data[n].n)seen[data[n].n]=1});
-  Object.keys(LOG).forEach(function(d){Object.keys(LOG[d]).forEach(function(n){seen[LOG[d][n].n]=1})});
-  $("names").innerHTML=Object.keys(seen).sort().map(function(x){return '<option value="'+esc(x)+'">'}).join("");
-}
-function stats(){
-  var total=0,done=0;
-  SECTIONS.forEach(function(s,si){
-    var d=0;s[1].forEach(function(n){if(data[n]&&data[n].n)d++});
-    total+=s[1].length;done+=d;$("c"+si).textContent=d+" / "+s[1].length+" logged";
-  });
-  $("prog").textContent=done+" of "+total+" rooms logged";
-}
-function rowOf(el){return el.closest("tr[data-r]")}
-$("secs").addEventListener("input",function(e){
-  var tr=rowOf(e.target);if(!tr)return;
-  var n=tr.dataset.r,f=e.target.dataset.f,r=data[n]||(data[n]={n:""});
-  if(f=="n"){r.n=e.target.value.trim();tr.classList.toggle("done",!!r.n);if(!r.n)delete data[n];}
-  save();stats();
-});
-$("secs").addEventListener("change",function(e){if(e.target.dataset.f=="n")names();});
-$("secs").addEventListener("click",function(e){
-  var b=e.target.closest("[data-x]");if(!b)return;
-  var tr=rowOf(b),n=tr.dataset.r;delete data[n];
-  tr.querySelector('[data-f="n"]').value="";
-  tr.classList.remove("done");save();stats();names();
-});
-$("clr").onclick=function(){
-  if(!confirm("Clear every room's housekeeper and date?"))return;
-  data={};save();build();names();stats();
-};
-
-function sumRender(){
-  var d=$("sd").value||today(),by={};
-  var day=LOG[d]||{};Object.keys(day).forEach(function(n){var r=day[n];(by[r.n]=by[r.n]||[]).push(+n)});
-  var ks=Object.keys(by).sort();
-  var tot=Object.keys(day).length;
-  $("lk").textContent=tot?"Locked log: "+tot+" rooms saved for this date.":"";
-  $("stb").innerHTML=ks.length?ks.map(function(k){
-    return '<tr><td><b>'+esc(k)+'</b></td><td>'+by[k].length+'</td><td>'+by[k].sort(function(a,b){return a-b}).join(", ")+'</td></tr>';
-  }).join(""):'<tr><td colspan="3" class="note">No saved log for this date. Enter rooms on the Room log tab and press Save to log.</td></tr>';
-}
-$("sd").onchange=sumRender;
-
-window.housekeepingSharedSync=createSharedJsonSync({
-  appKey:"housekeeping",
-  fileName:"Housekeeping_Tracker_Shared.json",
-  buttonId:"hk-sync-connect",
-  statusId:"hk-sync-status",
-  hasLocalData:function(value){return Object.keys(value.rooms||{}).length>0||Object.keys(value.log||{}).length>0},
-  getData:function(){return {rooms:data,log:LOG}},
-  isValid:function(value){return value&&typeof value.rooms==="object"&&typeof value.log==="object"},
-  mergeData:function(remote,local){
-    var logs={},dates=Object.keys(remote.log||{}).concat(Object.keys(local.log||{}));
-    dates.forEach(function(date){logs[date]=Object.assign({},remote.log&&remote.log[date]||{},local.log&&local.log[date]||{})});
-    return {rooms:Object.assign({},remote.rooms||{},local.rooms||{}),log:logs};
-  },
-  setData:function(value){
-    data=value.rooms||{};LOG=value.log||{};
-    try{localStorage.setItem(KEY,JSON.stringify(data));localStorage.setItem(LKEY,JSON.stringify(LOG))}catch(e){}
-    build();names();stats();sumRender();avgRender();
-  }
-});
-
-try{if(sessionStorage.getItem("hk_in")==="1")enter()}catch(e){}
-</script>
+<script src="script.js"></script>
 </body>
 </html>

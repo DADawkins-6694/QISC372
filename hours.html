@@ -7,6 +7,15 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <nav class="site-nav" aria-label="Main navigation">
+    <button class="site-nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="site-nav-links" title="Open navigation menu"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></button>
+    <div class="site-nav-links" id="site-nav-links" hidden>
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="cash_inventory_website_updated.html">Cash</a>
+      <a href="Housekeeping-Tracker.html">Housekeeping</a>
+      <button class="site-theme-toggle" type="button" data-action-click="toggleDarkMode" data-theme-toggle aria-pressed="false">Dark Mode: Off</button>
+    </div>
+  </nav>
   
   <img src="QI-EL-Combo-Photo.png" 
        alt="Quality Inn Logo" class="tracker-logo">
@@ -33,7 +42,7 @@
         <option value="Other">Other</option>
       </select>
     </div>
-    <button class="btn-in" onclick="handleClockIn()">Clock In</button>
+    <button class="btn-in" data-action-click="handleClockIn">Clock In</button>
     <div class="status-msg" id="inStatus"></div>
   </div>
 
@@ -49,7 +58,7 @@
       <label for="outDesc">What did you work on?</label>
       <input type="text" id="outDesc" placeholder="Brief work description" autocomplete="off">
     </div>
-    <button class="btn-out" onclick="handleClockOut()">Clock Out</button>
+    <button class="btn-out" data-action-click="handleClockOut">Clock Out</button>
     <div class="status-msg" id="outStatus"></div>
   </div>
   
@@ -78,8 +87,8 @@
       </div>
       <div class="status-msg error" id="clockOutModalStatus"></div>
       <div class="modal-actions">
-        <button class="btn-out" onclick="submitAdminClockOut()">Clock Out</button>
-        <button class="btn-cancel" onclick="closeAdminClockOutModal()">Cancel</button>
+        <button class="btn-out" data-action-click="submitAdminClockOut">Clock Out</button>
+        <button class="btn-cancel" data-action-click="closeAdminClockOutModal">Cancel</button>
       </div>
     </div>
   </div>
@@ -94,8 +103,8 @@
       </div>
       <div class="status-msg error" id="approvalModalStatus"></div>
       <div class="modal-actions">
-        <button class="btn-in" id="approvalSubmitBtn" onclick="submitApproval()">Confirm</button>
-        <button class="btn-cancel" onclick="closeApprovalModal()">Cancel</button>
+        <button class="btn-in" id="approvalSubmitBtn" data-action-click="submitApproval">Confirm</button>
+        <button class="btn-cancel" data-action-click="closeApprovalModal">Cancel</button>
       </div>
     </div>
   </div>
@@ -109,22 +118,22 @@
     <div class="admin-row" id="adminLoggedOut">
       <input type="text" id="adminUser" placeholder="Username" autocomplete="off">
       <input type="password" id="adminPass" placeholder="Password" autocomplete="off">
-      <button onclick="handleAdminLogin()">Unlock Editing</button>
+      <button data-action-click="handleAdminLogin">Unlock Editing</button>
       <span class="status-msg" id="adminStatus"></span>
     </div>
     <div class="admin-row" id="adminLoggedIn" >
       <span>Editing is unlocked on this device. Drag the edge of a column title to resize it.</span>
-      <button onclick="resetColumnWidths()">Reset Column Widths</button>
-      <button onclick="handleAdminLogout()">Lock</button>
+      <button data-action-click="resetColumnWidths">Reset Column Widths</button>
+      <button data-action-click="handleAdminLogout">Lock</button>
     </div>
   </div>
 
   <div class="records-header">
     <h2>Attendance Records (last 90 days)</h2>
     <div class="controls">
-      <button onclick="setSort('name')">Sort by Name</button>
-      <button onclick="setSort('time')">Sort by Date/Time</button>
-      <button onclick="openAddShiftModal()">Add Shift</button>
+      <button data-action-click="setSort" data-action-args="name">Sort by Name</button>
+      <button data-action-click="setSort" data-action-args="time">Sort by Date/Time</button>
+      <button data-action-click="openAddShiftModal">Add Shift</button>
     </div>
   </div>
 
@@ -136,8 +145,8 @@
       <thead>
         <tr>
           <th>Mgmt<span class="col-resizer"></span></th>
-          <th onclick="setSort('name')">Name<span class="arrow" id="arrow-name"></span><span class="col-resizer"></span></th>
-          <th onclick="setSort('time')">Clock In<span class="arrow" id="arrow-time"></span><span class="col-resizer"></span></th>
+          <th data-action-click="setSort" data-action-args="name">Name<span class="arrow" id="arrow-name"></span><span class="col-resizer"></span></th>
+          <th data-action-click="setSort" data-action-args="time">Clock In<span class="arrow" id="arrow-time"></span><span class="col-resizer"></span></th>
           <th>Clock Out<span class="col-resizer"></span></th>
           <th>Description<span class="col-resizer"></span></th>
           <th>Hours<span class="col-resizer"></span></th>
@@ -154,7 +163,7 @@
 <div class="panel records-panel" id="absencesPanel">
   <div class="records-header">
     <h2>Absences</h2>
-    <button type="button" class="btn-clockout" onclick="openAbsenceModal()">Add Absence</button>
+    <button type="button" class="btn-clockout" data-action-click="openAbsenceModal">Add Absence</button>
   </div>
   <div class="table-wrap">
     <table>
@@ -187,8 +196,8 @@
     </div>
     <div class="status-msg error" id="adminAuthStatus"></div>
     <div class="modal-actions">
-      <button class="btn-out" onclick="submitAdminAuth()">Confirm</button>
-      <button class="btn-cancel" onclick="closeAdminAuthModal()">Cancel</button>
+      <button class="btn-out" data-action-click="submitAdminAuth">Confirm</button>
+      <button class="btn-cancel" data-action-click="closeAdminAuthModal">Cancel</button>
     </div>
   </div>
 </div>
@@ -225,8 +234,8 @@
     </div>
     <div class="status-msg error" id="addShiftStatus"></div>
     <div class="modal-actions">
-      <button class="btn-in" onclick="submitAddShift()">Add Shift</button>
-      <button class="btn-cancel" onclick="closeAddShiftModal()">Cancel</button>
+      <button class="btn-in" data-action-click="submitAddShift">Add Shift</button>
+      <button class="btn-cancel" data-action-click="closeAddShiftModal">Cancel</button>
     </div>
   </div>
 </div>
@@ -235,14 +244,14 @@
     <h3>Overtime Alerts</h3>
     <p>
       Warns when someone is approaching or has passed a weekly overtime threshold, based on completed
-      shifts already in the table above (MondayÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œSunday business week).
+      shifts already in the table above (Monday-Sunday business week).
     </p>
     <div class="settings-row">
       <label for="otThreshold">Weekly overtime threshold (hours):</label>
       <input type="number" id="otThreshold" min="1" step="0.5">
       <label for="otWarnWithin">Warn when within (hours):</label>
       <input type="number" id="otWarnWithin" min="0" step="0.5">
-      <button onclick="handleSaveOtSettings()">Save</button>
+      <button data-action-click="handleSaveOtSettings">Save</button>
       <span class="status-msg" id="otSettingsStatus"></span>
     </div>
     <div id="otAlertsList" class="alert-list"></div>
@@ -252,16 +261,16 @@
 <div class="filter-box">
     <h3>Filtered Excel Reports</h3>
     <div class="filter-group">
-      <label for="weekPickerDate">Business week (MonÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œSun) containing:</label>
+      <label for="weekPickerDate">Business week (Mon-Sun) containing:</label>
       <input type="date" id="weekPickerDate">
-      <button onclick="exportBusinessWeek()">Export Week</button>
+      <button data-action-click="exportBusinessWeek">Export Week</button>
     </div>
     <div class="filter-group">
       <label for="rangeStart">Date range:</label>
       <input type="date" id="rangeStart">
       <span>to</span>
       <input type="date" id="rangeEnd">
-      <button onclick="exportDateRange()">Export Range</button>
+      <button data-action-click="exportDateRange">Export Range</button>
     </div>
     <div class="filter-group">
       <label for="daysSelect">Pre-Selected Day Range:</label>
@@ -275,7 +284,7 @@
         <option value="14">14 days</option>
         <option value="7">7 days</option>
       </select>
-      <button onclick="exportLastNDays()">Export</button>
+      <button data-action-click="exportLastNDays">Export</button>
     </div>
   </div>
 
@@ -283,7 +292,7 @@
     <h3>Payroll Export</h3>
     <p>
       Summarizes each employee's hours over a pay period, with overtime already split out per business week
-      (using the threshold set above in Overtime Alerts) ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â no manual math is needed. 
+      (using the threshold set above in Overtime Alerts) - no manual math is needed. 
       <strong>Column layout isn't matched to a specific payroll provider, but this can be changed.</strong>
     </p>
     <div class="settings-row">
@@ -291,8 +300,8 @@
       <input type="date" id="payrollStart">
       <span>to</span>
       <input type="date" id="payrollEnd">
-      <button onclick="exportPayrollCsv()">Export CSV</button>
-      <button onclick="exportPayrollPdf()">Export PDF</button>
+      <button data-action-click="exportPayrollCsv">Export CSV</button>
+      <button data-action-click="exportPayrollPdf">Export PDF</button>
     </div>
   </div>
 
@@ -308,8 +317,8 @@
       isn't available, or you're on a browser without this support, the export will fall back to a normal file download instead.
     </p>
     <div class="autosave-actions">
-      <button onclick="chooseSaveFolder()">Choose Auto-Save Folder</button>
-      <button onclick="exportToXlsx(false)">Export Now</button>
+      <button data-action-click="chooseSaveFolder">Choose Auto-Save Folder</button>
+      <button data-action-click="exportToXlsx" data-action-args="false">Export Now</button>
       <span id="folderStatus">No auto-save folder selected yet.</span>
     </div>
     <div class="status-msg" id="exportStatus"></div>
@@ -355,8 +364,8 @@
     </div>
     <div class="status-msg error" id="absenceModalStatus"></div>
     <div class="modal-actions">
-      <button class="btn-out" onclick="submitAbsence()">Add Absence</button>
-      <button class="btn-cancel" onclick="closeAbsenceModal()">Cancel</button>
+      <button class="btn-out" data-action-click="submitAbsence">Add Absence</button>
+      <button class="btn-cancel" data-action-click="closeAbsenceModal">Cancel</button>
     </div>
   </div>
 </div>

@@ -1,3 +1,107 @@
+const DARK_MODE_KEY = 'qi_site_dark_mode';
+
+function setDarkMode(enabled) {
+  if (document.body.classList.contains('housekeeping-page')) return;
+  document.body.classList.toggle('dark-mode', enabled);
+  try { localStorage.setItem(DARK_MODE_KEY, enabled ? 'true' : 'false'); } catch (error) {}
+  document.querySelectorAll('[data-theme-toggle]').forEach(button => {
+    button.setAttribute('aria-pressed', String(enabled));
+    button.textContent = enabled ? 'Dark Mode: On' : 'Dark Mode: Off';
+  });
+}
+
+function toggleDarkMode() {
+  setDarkMode(!document.body.classList.contains('dark-mode'));
+}
+
+try {
+  if (!document.body.classList.contains('housekeeping-page')) {
+    setDarkMode(localStorage.getItem(DARK_MODE_KEY) === 'true');
+  }
+} catch (error) {
+  setDarkMode(false);
+}
+
+document.addEventListener('click', event => {
+  const toggle = event.target.closest('.site-nav-toggle');
+  if (toggle) {
+    const nav = toggle.closest('.site-nav');
+    const links = nav && nav.querySelector('.site-nav-links');
+    if (!links) return;
+    const isOpening = toggle.getAttribute('aria-expanded') !== 'true';
+    toggle.setAttribute('aria-expanded', String(isOpening));
+    toggle.setAttribute('aria-label', isOpening ? 'Close navigation menu' : 'Open navigation menu');
+    toggle.title = isOpening ? 'Close navigation menu' : 'Open navigation menu';
+    links.hidden = !isOpening;
+    return;
+  }
+
+  if (event.target.closest('.site-nav-links a')) {
+    const nav = event.target.closest('.site-nav');
+    const menuToggle = nav && nav.querySelector('.site-nav-toggle');
+    if (menuToggle) {
+      menuToggle.setAttribute('aria-expanded', 'false');
+      menuToggle.setAttribute('aria-label', 'Open navigation menu');
+      menuToggle.title = 'Open navigation menu';
+    }
+    return;
+  }
+
+  document.querySelectorAll('.site-nav-toggle[aria-expanded="true"]').forEach(menuToggle => {
+    menuToggle.setAttribute('aria-expanded', 'false');
+    menuToggle.setAttribute('aria-label', 'Open navigation menu');
+    menuToggle.title = 'Open navigation menu';
+    const links = menuToggle.closest('.site-nav').querySelector('.site-nav-links');
+    if (links) links.hidden = true;
+  });
+});
+
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  document.querySelectorAll('.site-nav-toggle[aria-expanded="true"]').forEach(menuToggle => {
+    menuToggle.setAttribute('aria-expanded', 'false');
+    menuToggle.setAttribute('aria-label', 'Open navigation menu');
+    menuToggle.title = 'Open navigation menu';
+    const links = menuToggle.closest('.site-nav').querySelector('.site-nav-links');
+    if (links) links.hidden = true;
+  });
+});
+
+function parseDataActionArguments(element, event) {
+  const raw = element.dataset.actionArgs;
+  if (!raw) return [];
+  return raw.split('|').map(argument => {
+    if (argument === '$value') return event.target.value;
+    if (argument === '$element') return event.target;
+    if (argument === '$event') return event;
+    if (argument === 'false') return false;
+    if (argument === 'true') return true;
+    return argument;
+  });
+}
+
+document.addEventListener('click', event => {
+  const element = event.target.closest('[data-action-click]');
+  if (!element) return;
+  const action = window[element.dataset.actionClick];
+  if (typeof action === 'function') action(...parseDataActionArguments(element, event));
+});
+
+document.addEventListener('change', event => {
+  const element = event.target.closest('[data-action-change]');
+  if (!element) return;
+  const action = window[element.dataset.actionChange];
+  if (typeof action === 'function') action(...parseDataActionArguments(element, event));
+});
+
+document.addEventListener('submit', event => {
+  const element = event.target.closest('[data-action-submit]');
+  if (!element) return;
+  event.preventDefault();
+  const action = window[element.dataset.actionSubmit];
+  if (typeof action === 'function') action(...parseDataActionArguments(element, event));
+});
+
 const STORAGE_KEY = 'attendance_records_v1';
 const SHARED_DATA_FILENAME = 'Attendance_Tracker_Shared.json';
 const SHARED_FOLDER_EVENT_KEY = 'attendance_shared_folder_updated';
@@ -265,7 +369,7 @@ function scheduleSharedDataSave() {
   // A person is "currently clocked in" when their single most recent record
   // (by timestamp) is a clock-in. This is intentionally independent of
   // buildDisplayRows()'s pairing window (used for shift-hours calculations)
-  // so a clock-out ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â automatic or admin-triggered ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â always takes someone
+  // so a clock-out - automatic or admin-triggered - always takes someone
   // off this list immediately, however long they'd been clocked in.
   function getOpenClockIns(records) {
     const latestByName = new Map();
@@ -408,7 +512,7 @@ function scheduleSharedDataSave() {
         row.className = 'alert-row';
         const inStr = new Date(r.clockIn).toLocaleString();
         const elapsedHrs = ((Date.now() - r.clockIn) / 3600000).toFixed(2);
-        row.innerHTML = `<span><strong>${escapeHtml(r.name)}</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â in since ${inStr}</span><span class="badge badge-in">IN</span> <span>${elapsedHrs} h so far</span>`;
+        row.innerHTML = `<span><strong>${escapeHtml(r.name)}</strong> - in since ${inStr}</span><span class="badge badge-in">IN</span> <span>${elapsedHrs} h so far</span>`;
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'btn-clockout';
@@ -452,7 +556,7 @@ function scheduleSharedDataSave() {
         const detail = over
           ? `${(hrs - threshold).toFixed(2)} h over ${threshold}h`
           : `${(threshold - hrs).toFixed(2)} h left before ${threshold}h`;
-        row.innerHTML = `<span><strong>${escapeHtml(name)}</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ${hrs.toFixed(2)} h this week</span><span class="badge">${badgeText}</span> <span>${detail}</span>`;
+        row.innerHTML = `<span><strong>${escapeHtml(name)}</strong> - ${hrs.toFixed(2)} h this week</span><span class="badge">${badgeText}</span> <span>${detail}</span>`;
         alertsEl.appendChild(row);
       });
     }
@@ -463,7 +567,7 @@ function scheduleSharedDataSave() {
       const rowsHtml = entries.map(([name, hrs]) =>
         `<tr><td>${escapeHtml(name)}</td><td>${hrs.toFixed(2)} h</td></tr>`
       ).join('');
-      summaryEl.innerHTML = `<div>This week's hours (MonÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“Sun, completed shifts only):</div><table><thead><tr><th>Name</th><th>Hours</th></tr></thead><tbody>${rowsHtml}</tbody></table>`;
+      summaryEl.innerHTML = `<div>This week's hours (Mon-Sun, completed shifts only):</div><table><thead><tr><th>Name</th><th>Hours</th></tr></thead><tbody>${rowsHtml}</tbody></table>`;
     }
   }
 
@@ -471,7 +575,7 @@ function scheduleSharedDataSave() {
     return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
-  // Legacy records saved before this feature won't have an id yet ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â assign
+  // Legacy records saved before this feature won't have an id yet - assign
   // one the first time they're loaded so edit/delete can target them.
   function ensureRecordIds(records) {
     let changed = false;
@@ -516,7 +620,7 @@ function scheduleSharedDataSave() {
       return;
     }
     if (isNameCurrentlyClockedIn(name)) {
-      showStatus('inStatus', `${name} is already clocked in ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â clock out first.`, 'error');
+      showStatus('inStatus', `${name} is already clocked in - clock out first.`, 'error');
       return;
     }
     addRecord(name, 'In', '');
@@ -561,10 +665,9 @@ function scheduleSharedDataSave() {
   function updateSortArrows() {
     const nameArrow = document.getElementById('arrow-name');
     const timeArrow = document.getElementById('arrow-time');
-    if (!nameArrow || !timeArrow) return;
-    nameArrow.textContent = '';
-    timeArrow.textContent = '';
-    const arrow = sortState.asc ? 'ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â²' : 'ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â¼';
+    if (nameArrow) nameArrow.textContent = '';
+    if (timeArrow) timeArrow.textContent = '';
+    const arrow = sortState.asc ? 'ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â²' : 'ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¼';
     const activeArrow = document.getElementById('arrow-' + sortState.field);
     if (activeArrow) activeArrow.textContent = arrow;
   }
@@ -690,16 +793,16 @@ function scheduleSharedDataSave() {
   // Checks for creating the missing half of a shift (adding a clock-out to a
   // lone clock-in, or a clock-in to a lone clock-out).
   function validateNewShift(name, inTs, outTs, ignoreIds) {
-    if (isNaN(inTs) || isNaN(outTs)) return 'Invalid date/time ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.';
+    if (isNaN(inTs) || isNaN(outTs)) return 'Invalid date/time - no change made.';
     const limit = Date.now() + 60000;
-    if (inTs > limit || outTs > limit) return 'That time is in the future ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.';
-    if (outTs < inTs) return 'Clock Out must be after Clock In ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.';
+    if (inTs > limit || outTs > limit) return 'That time is in the future - no change made.';
+    if (outTs < inTs) return 'Clock Out must be after Clock In - no change made.';
     if (outTs - inTs > PAIRING_WINDOW_MS) {
-      return `A shift can't be longer than ${PAIRING_WINDOW_MS / 3600000} hours ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.`;
+      return `A shift can't be longer than ${PAIRING_WINDOW_MS / 3600000} hours - no change made.`;
     }
     const clash = loadRecords().some(r =>
       r.name === name && !ignoreIds.includes(r.id) && r.timestamp > inTs && r.timestamp < outTs);
-    if (clash) return 'Another entry for this person falls inside that time span ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.';
+    if (clash) return 'Another entry for this person falls inside that time span - no change made.';
     return null;
   }
 
@@ -752,7 +855,7 @@ function scheduleSharedDataSave() {
       } else if (inRec) {
         inRec.description = newDescription;
       } else {
-        return 'Record not found ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.';
+        return 'Record not found - no change made.';
       }
       return null;
     });
@@ -761,12 +864,12 @@ function scheduleSharedDataSave() {
   function handleAdminEditDateTime(id, inputEl) {
     if (!isAdmin || !id) { renderTable(); return; }
     const ts = new Date(inputEl.value).getTime();
-    if (isNaN(ts)) { alert('Invalid date/time ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.'); renderTable(); return; }
+    if (isNaN(ts)) { alert('Invalid date/time - no change made.'); renderTable(); return; }
     commitAdminEdit(id, records => {
       const problem = validateTimeEdit(id, ts);
       if (problem) return problem;
       const rec = records.find(r => r.id === id);
-      if (!rec) return 'Record not found ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.';
+      if (!rec) return 'Record not found - no change made.';
       rec.timestamp = ts;
       if (rec.type === 'Out') rec.autoTimeout = false; // manually corrected, so real hours count
       return null;
@@ -779,7 +882,7 @@ function scheduleSharedDataSave() {
     const outTs = new Date(inputEl.value).getTime();
     commitAdminEdit(clockInId, records => {
       const inRec = records.find(r => r.id === clockInId);
-      if (!inRec) return 'Record not found ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.';
+      if (!inRec) return 'Record not found - no change made.';
       const problem = validateNewShift(inRec.name, inRec.timestamp, outTs, [clockInId]);
       if (problem) return problem;
       createClockOut(records, inRec, outTs);
@@ -793,7 +896,7 @@ function scheduleSharedDataSave() {
     const inTs = new Date(inputEl.value).getTime();
     commitAdminEdit(clockOutId, records => {
       const outRec = records.find(r => r.id === clockOutId);
-      if (!outRec) return 'Record not found ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.';
+      if (!outRec) return 'Record not found - no change made.';
       const problem = validateNewShift(outRec.name, inTs, outRec.timestamp, [clockOutId]);
       if (problem) return problem;
       createClockIn(records, outRec, inTs);
@@ -809,7 +912,7 @@ function scheduleSharedDataSave() {
     if (raw === '') { renderTable(); return; }
     const hrs = Number(raw);
     if (!isFinite(hrs) || hrs < 0) {
-      alert('Hours must be a number that is 0 or more ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.');
+      alert('Hours must be a number that is 0 or more - no change made.');
       renderTable();
       return;
     }
@@ -834,7 +937,7 @@ function scheduleSharedDataSave() {
         if (problem) return problem;
         createClockIn(records, outRec, newIn);
       } else {
-        return 'Record not found ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.';
+        return 'Record not found - no change made.';
       }
       return null;
     });
@@ -847,18 +950,18 @@ function scheduleSharedDataSave() {
   // than the pairing window, which would split the line in two and drop the
   // shift from the overtime totals). Returns null if the edit is fine.
   function validateTimeEdit(id, newTs) {
-    if (newTs > Date.now() + 60000) return 'That time is in the future ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.';
+    if (newTs > Date.now() + 60000) return 'That time is in the future - no change made.';
     const row = buildDisplayRows(pruneOld(loadRecords()))
       .find(r => r.clockInId === id || r.clockOutId === id);
     if (row && row.clockInId && row.clockOutId) {
       const inTs = id === row.clockInId ? newTs : row.clockIn;
       const outTs = id === row.clockOutId ? newTs : row.clockOut;
-      if (outTs < inTs) return 'Clock Out must be after Clock In ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.';
+      if (outTs < inTs) return 'Clock Out must be after Clock In - no change made.';
       // Moving the clock-in of an auto-timed-out shift keeps its flag, so it
       // stays paired regardless of length; any other edit must fit the window.
       const staysTimedOut = row.autoTimeout && id === row.clockInId;
       if (!staysTimedOut && (outTs - inTs) > PAIRING_WINDOW_MS) {
-        return `A shift can't be longer than ${PAIRING_WINDOW_MS / 3600000} hours ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.`;
+        return `A shift can't be longer than ${PAIRING_WINDOW_MS / 3600000} hours - no change made.`;
       }
     }
     return null;
@@ -970,13 +1073,13 @@ function scheduleSharedDataSave() {
           ? (r.clockIn
               ? dtInput(r.clockInId, `handleAdminEditDateTime('${r.clockInId}', this)`, toDatetimeLocalValue(r.clockIn))
               : `<input type="datetime-local" class="notes-input" value="" title="Add the missing clock-in time" onchange="handleAdminAddClockIn('${r.clockOutId}', this)">`)
-          : (r.clockIn ? new Date(r.clockIn).toLocaleString() : 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â');
+          : (r.clockIn ? new Date(r.clockIn).toLocaleString() : '-');
 
         const outCell = isAdmin
           ? (r.clockOut
               ? dtInput(r.clockOutId, `handleAdminEditDateTime('${r.clockOutId}', this)`, toDatetimeLocalValue(r.clockOut))
               : `<input type="datetime-local" class="notes-input" value="" title="Add the missing clock-out time" onchange="handleAdminAddClockOut('${r.clockInId}', this)">`)
-          : (r.clockOut ? new Date(r.clockOut).toLocaleString() : 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â');
+          : (r.clockOut ? new Date(r.clockOut).toLocaleString() : '-');
 
         const descCell = isAdmin
           ? `<input type="text" class="notes-input" value="${escapeHtml(r.description)}" placeholder="Description" onchange="handleAdminEditDescription('${r.clockInId || ''}', '${r.clockOutId || ''}', this.value)">`
@@ -1167,7 +1270,7 @@ function scheduleSharedDataSave() {
     const outTs = new Date(outVal).getTime();
     const problem = validateNewShift(name, inTs, outTs, []);
     if (problem) {
-      status.textContent = problem.replace(' ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change made.', '.');
+      status.textContent = problem.replace(' - no change made.', '.');
       return;
     }
     let records = loadRecords();
@@ -1759,7 +1862,7 @@ function scheduleSharedDataSave() {
     const centralChunks = [];
     let offset = 0;
     const modTime = 0;
-    const modDate = 0x21; // Jan 1, 1980 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â placeholder, doesn't affect usability
+    const modDate = 0x21; // Jan 1, 1980 - placeholder, doesn't affect usability
 
     files.forEach(file => {
       const nameBytes = encoder.encode(file.name);
@@ -1991,9 +2094,9 @@ function scheduleSharedDataSave() {
 
   /* ---------------- Payroll export (CSV + offline PDF, no libraries) ---------------- */
 
-  // Splits completed shifts in [rangeStart, rangeEnd] into their MonÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“Sun
+  // Splits completed shifts in [rangeStart, rangeEnd] into their Mon-Sun
   // business weeks, sums hours per employee per week, and only then splits
-  // each week's total into regular/overtime ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â this matches how weekly
+  // each week's total into regular/overtime - this matches how weekly
   // overtime (FLSA-style, 40 hrs/week by default) is actually calculated,
   // even when the pay period itself spans more than one week.
   function computePayrollSummary(records, rangeStart, rangeEnd, weeklyThreshold) {
@@ -2198,3 +2301,429 @@ function scheduleSharedDataSave() {
 
   restoreSaveFolder();
   setInterval(checkAutoSaveTime, 20000); // check every 20 seconds
+
+(function (global) {
+  const DB_NAME = 'qi-shared-tracker-folders';
+  const STORE_NAME = 'handles';
+  const POLL_INTERVAL_MS = 3000;
+
+  function openDatabase() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = () => request.result.createObjectStore(STORE_NAME);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async function getSavedHandle(key) {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const request = transaction.objectStore(STORE_NAME).get(key);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async function saveHandle(key, handle) {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      transaction.objectStore(STORE_NAME).put(handle, key);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  function serialize(value) {
+    return JSON.stringify(value);
+  }
+
+  global.createSharedJsonSync = function (options) {
+    const button = document.getElementById(options.buttonId);
+    const status = document.getElementById(options.statusId);
+    const migrationKey = `shared_json_migrated_${options.appKey}`;
+    const baselineKey = `shared_json_baseline_${options.appKey}`;
+    let directoryHandle = null;
+    let connected = false;
+    let busy = false;
+    let pollTimer = null;
+    let lastLocalText = '';
+    let lastRemoteText = '';
+
+    function setStatus(message, isError) {
+      if (!status) return;
+      status.textContent = message;
+      status.classList.toggle('sync-error', !!isError);
+    }
+
+    function localData() {
+      return options.getData();
+    }
+
+    async function ensurePermission(handle, request) {
+      const permission = { mode: 'readwrite' };
+      if (await handle.queryPermission(permission) === 'granted') return true;
+      return request && await handle.requestPermission(permission) === 'granted';
+    }
+
+    async function readRemoteData() {
+      const fileHandle = await directoryHandle.getFileHandle(options.fileName, { create: true });
+      const file = await fileHandle.getFile();
+      const text = await file.text();
+      if (!text.trim()) return { text: '', data: null };
+      const record = JSON.parse(text);
+      if (record.version !== 1 || !record.data || !options.isValid(record.data)) {
+        throw new Error(`${options.fileName} has an unsupported format.`);
+      }
+      return { text, data: record.data };
+    }
+
+    async function writeRemoteData(data) {
+      const fileHandle = await directoryHandle.getFileHandle(options.fileName, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(JSON.stringify({ version: 1, updatedAt: new Date().toISOString(), data }, null, 2));
+      await writable.close();
+    }
+
+    function updateConnectedStatus() {
+      setStatus(`Connected to Google Drive folder "${directoryHandle.name}". Updates sync while this page is open.`, false);
+      if (button) button.textContent = 'Reconnect Shared Folder';
+    }
+
+    function saveBaseline(local, remoteText) {
+      lastLocalText = serialize(local);
+      lastRemoteText = remoteText;
+      localStorage.setItem(migrationKey, 'true');
+      localStorage.setItem(baselineKey, lastLocalText);
+    }
+
+    async function connect(handle, requestPermission) {
+      directoryHandle = handle;
+      if (!await ensurePermission(handle, requestPermission)) {
+        connected = false;
+        setStatus('Read/write folder permission is required. Reconnect and allow access.', true);
+        return;
+      }
+
+      const remote = await readRemoteData();
+      const local = localData();
+      const migrated = localStorage.getItem(migrationKey) === 'true';
+      const baseline = localStorage.getItem(baselineKey);
+      const hasLocalData = !options.hasLocalData || options.hasLocalData(local);
+      const localChanged = migrated ? baseline === null || serialize(local) !== baseline : hasLocalData;
+      const data = remote.data
+        ? localChanged ? options.mergeData(remote.data, local) : remote.data
+        : local;
+
+      await options.setData(data);
+      await writeRemoteData(data);
+      saveBaseline(localData(), serialize(data));
+      connected = true;
+      clearInterval(pollTimer);
+      pollTimer = setInterval(syncOnce, POLL_INTERVAL_MS);
+      updateConnectedStatus();
+    }
+
+    async function syncOnce() {
+      if (!connected || busy) return;
+      busy = true;
+      try {
+        if (!await ensurePermission(directoryHandle, false)) {
+          connected = false;
+          clearInterval(pollTimer);
+          setStatus('Google Drive permission expired. Reconnect the shared folder.', true);
+          return;
+        }
+
+        const remote = await readRemoteData();
+        const local = localData();
+        const localText = serialize(local);
+        const remoteText = remote.data ? serialize(remote.data) : '';
+        const localChanged = localText !== lastLocalText;
+        const remoteChanged = remoteText !== lastRemoteText;
+        if (!localChanged && !remoteChanged) return;
+
+        if (remote.data && remoteChanged && !localChanged) {
+          await options.setData(remote.data);
+          saveBaseline(localData(), remoteText);
+          setStatus('Updated from the shared Google Drive file.', false);
+          return;
+        }
+
+        const merged = remote.data ? options.mergeData(remote.data, local) : local;
+        await options.setData(merged);
+        await writeRemoteData(merged);
+        saveBaseline(localData(), serialize(merged));
+        updateConnectedStatus();
+      } catch (error) {
+        setStatus(error.message || 'Shared-file sync failed. Check folder access and try again.', true);
+      } finally {
+        busy = false;
+      }
+    }
+
+    async function chooseFolder() {
+      if (!('showDirectoryPicker' in global)) {
+        setStatus('Use Chrome or Edge to connect a Google Drive for desktop folder.', true);
+        return;
+      }
+      try {
+        const handle = await global.showDirectoryPicker({ id: `qi-shared-${options.appKey}`, mode: 'readwrite' });
+        await saveHandle(options.appKey, handle);
+        await connect(handle, true);
+      } catch (error) {
+        if (error.name !== 'AbortError') setStatus(error.message || 'Could not connect the Google Drive folder.', true);
+      }
+    }
+
+    async function start() {
+      try {
+        const handle = await getSavedHandle(options.appKey);
+        if (!handle) return;
+        directoryHandle = handle;
+        if (await ensurePermission(handle, false)) await connect(handle, false);
+        else setStatus('Previously selected Google Drive folder needs permission. Reconnect it to continue.', false);
+      } catch (error) {
+        setStatus(error.message || 'Could not restore the shared folder.', true);
+      }
+    }
+
+    function disconnect() {
+      connected = false;
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+
+    if (button) button.addEventListener('click', chooseFolder);
+    global.addEventListener('beforeunload', disconnect);
+
+    return { start, connect: chooseFolder, connectHandle: handle => connect(handle, true), disconnect, sync: syncOnce };
+  };
+})(window);
+
+if (document.body.classList.contains('housekeeping-page')) {
+(function () {
+function rng(a,b){var r=[];for(var i=a;i<=b;i+=2)r.push(i);return r}
+var SECTIONS=[
+ ["Quality 1st Floor - Even",rng(100,126)],
+ ["Quality 1st Floor - Odd",rng(101,127)],
+ ["Quality 2nd Floor - Even",rng(200,226)],
+ ["Quality 2nd Floor - Odd",rng(201,227)],
+ ["Econo 1st Floor",rng(128,158)],
+ ["Econo 2nd Floor",rng(228,252)]
+];
+var KEY="hk_log_v2", LKEY="hk_saved_log_v1", data={}, LOG={};
+var HK=["a","b","c","d","e","f"];
+function sel(v,n){var l=HK.indexOf(v)<0&&v?HK.concat([v]):HK;
+  return '<select data-f="n" aria-label="Housekeeper for room '+n+'"><option value="">Select</option>'+l.map(function(x){return '<option value="'+esc(x)+'"'+(x==v?' selected':'')+'>'+esc(x)+'</option>'}).join("")+'</select>'}
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function today(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+function load(){try{data=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){data={}}
+  try{LOG=JSON.parse(localStorage.getItem(LKEY)||"{}")||{}}catch(e){LOG={}}}
+function saveLog(){try{localStorage.setItem(LKEY,JSON.stringify(LOG))}catch(e){}}
+function msg(t){document.querySelectorAll(".smsg").forEach(function(s){s.textContent=t})}
+function doSave(){
+  var D=$("gd").value||today(),fresh=[],skip=0;
+  Object.keys(data).forEach(function(n){var r=data[n];if(!r.n)return;if((LOG[D]||{})[n])skip++;else fresh.push(n)});
+  if(!fresh.length&&!skip){msg("Nothing to save. Enter a housekeeper name for at least one room.");return}
+  if(!confirm("Save "+fresh.length+" room(s) to the log? Saved entries are locked and cannot be changed."))return;
+  var at=new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
+  fresh.forEach(function(n){var r=data[n];(LOG[D]=LOG[D]||{})[n]={n:r.n,at:at}});
+  saveLog();data={};save();build();names();stats();$("sd").value=D;sumRender();
+  msg("Saved "+fresh.length+" room(s) for "+D+" at "+at+"."+(skip?" "+skip+" already locked for that date, so they were not changed.":"")+" See the Daily summary tab.");
+  window.scrollTo(0,0);
+}
+document.addEventListener("click",function(e){if(e.target.closest("[data-save]"))doSave()});
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}}
+
+$("lf").addEventListener("submit",function(e){
+  e.preventDefault();
+  if($("u").value.trim()==="hk"&&$("p").value==="hk"){
+    try{sessionStorage.setItem("hk_in","1")}catch(x){}
+    enter();
+  }else $("err").textContent="Username or password is incorrect. Try again.";
+});
+function enter(){
+  $("login").classList.add("hide");$("app").classList.remove("hide");
+  load();$("sd").value=today();$("gd").value=today();build();names();stats();sumRender();
+  if(window.housekeepingSharedSync)window.housekeepingSharedSync.start();
+}
+$("out").onclick=function(){
+  if(window.housekeepingSharedSync)window.housekeepingSharedSync.disconnect();
+  try{sessionStorage.removeItem("hk_in")}catch(e){}
+  $("app").classList.add("hide");$("login").classList.remove("hide");$("p").value="";$("err").textContent="";
+};
+function tab(w){
+  $("v-log").classList.toggle("hide",w!="log");$("v-sum").classList.toggle("hide",w!="sum");$("v-avg").classList.toggle("hide",w!="avg");
+  $("t-log").setAttribute("aria-selected",w=="log");$("t-sum").setAttribute("aria-selected",w=="sum");$("t-avg").setAttribute("aria-selected",w=="avg");
+  if(w=="sum")sumRender();if(w=="avg")avgRender();
+}
+$("t-log").onclick=function(){tab("log")};
+$("t-sum").onclick=function(){tab("sum")};
+$("t-avg").onclick=function(){tab("avg")};
+
+var NOTE='';
+function tfmt(m){var h=Math.floor(m/60),x=m%60,p=h>=12?'PM':'AM';h=h%12||12;return h+':'+('0'+x).slice(-2)+' '+p}
+function dur(m){return Math.floor(m/60)+' h '+('0'+(m%60)).slice(-2)+' min'}
+function attendance(d){
+  return HK.map(function(h,i){var s=450+(i*7)%30,e=s+480+((i*11)%40);return {n:h,i:s,o:e}})}
+function avgRender(){
+  if(!$('avd').value)$('avd').value=today();
+  var d=$('avd').value,day=LOG[d]||{},cnt={};
+  Object.keys(day).forEach(function(n){var h=day[n].n;cnt[h]=(cnt[h]||0)+1});
+  $('avgnote').textContent=NOTE+(Object.keys(day).length?'':' No rooms are saved for this date yet.');
+  var T=0,R=0,html='';
+  attendance(d).forEach(function(a){var m=a.o-a.i,c=cnt[a.n]||0;T+=m;R+=c;html+='<tr><td><b>'+esc(a.n)+'</b></td><td>'+tfmt(a.i)+'</td><td>'+tfmt(a.o)+'</td><td>'+dur(m)+'</td><td>'+c+'</td><td>'+(c?(m/c).toFixed(1)+' min':'\u2013')+'</td></tr>'});
+  html+='<tr><td><b>All</b></td><td></td><td></td><td>'+dur(T)+'</td><td>'+R+'</td><td>'+(R?(T/R).toFixed(1)+' min':'\u2013')+'</td></tr>';
+  $('ab').innerHTML=html;
+}
+$('avd').onchange=avgRender;
+
+function build(){
+  var h="";
+  SECTIONS.forEach(function(s,si){
+    h+='<section class="sec" data-si="'+si+'"><h3>'+s[0]+'<small id="c'+si+'"></small></h3><div class="wrap"><table><thead><tr><th>Room</th><th>Housekeeper</th><th></th></tr></thead><tbody>';
+    s[1].forEach(function(n){
+      var r=data[n]||{};
+      h+='<tr data-r="'+n+'" class="'+(r.n?"done":"")+'"><td class="rm">'+n+'</td><td>'+sel(r.n||"",n)+'</td><td><button class="x" data-x="1" aria-label="Clear room '+n+'">Clear</button></td></tr>';
+    });
+    h+='</tbody></table></div></section>';
+  });
+  $("secs").innerHTML=h;
+}
+function names(){
+  var seen={};Object.keys(data).forEach(function(n){if(data[n].n)seen[data[n].n]=1});
+  Object.keys(LOG).forEach(function(d){Object.keys(LOG[d]).forEach(function(n){seen[LOG[d][n].n]=1})});
+  $("names").innerHTML=Object.keys(seen).sort().map(function(x){return '<option value="'+esc(x)+'">'}).join("");
+}
+function stats(){
+  var total=0,done=0;
+  SECTIONS.forEach(function(s,si){
+    var d=0;s[1].forEach(function(n){if(data[n]&&data[n].n)d++});
+    total+=s[1].length;done+=d;$("c"+si).textContent=d+" / "+s[1].length+" logged";
+  });
+  $("prog").textContent=done+" of "+total+" rooms logged";
+}
+function rowOf(el){return el.closest("tr[data-r]")}
+$("secs").addEventListener("input",function(e){
+  var tr=rowOf(e.target);if(!tr)return;
+  var n=tr.dataset.r,f=e.target.dataset.f,r=data[n]||(data[n]={n:""});
+  if(f=="n"){r.n=e.target.value.trim();tr.classList.toggle("done",!!r.n);if(!r.n)delete data[n];}
+  save();stats();
+});
+$("secs").addEventListener("change",function(e){if(e.target.dataset.f=="n")names();});
+$("secs").addEventListener("click",function(e){
+  var b=e.target.closest("[data-x]");if(!b)return;
+  var tr=rowOf(b),n=tr.dataset.r;delete data[n];
+  tr.querySelector('[data-f="n"]').value="";
+  tr.classList.remove("done");save();stats();names();
+});
+$("clr").onclick=function(){
+  if(!confirm("Clear every room's housekeeper and date?"))return;
+  data={};save();build();names();stats();
+};
+
+function sumRender(){
+  var d=$("sd").value||today(),by={};
+  var day=LOG[d]||{};Object.keys(day).forEach(function(n){var r=day[n];(by[r.n]=by[r.n]||[]).push(+n)});
+  var ks=Object.keys(by).sort();
+  var tot=Object.keys(day).length;
+  $("lk").textContent=tot?"Locked log: "+tot+" rooms saved for this date.":"";
+  $("stb").innerHTML=ks.length?ks.map(function(k){
+    return '<tr><td><b>'+esc(k)+'</b></td><td>'+by[k].length+'</td><td>'+by[k].sort(function(a,b){return a-b}).join(", ")+'</td></tr>';
+  }).join(""):'<tr><td colspan="3" class="note">No saved log for this date. Enter rooms on the Room log tab and press Save to log.</td></tr>';
+}
+$("sd").onchange=sumRender;
+
+window.housekeepingSharedSync=createSharedJsonSync({
+  appKey:"housekeeping",
+  fileName:"Housekeeping_Tracker_Shared.json",
+  buttonId:"hk-sync-connect",
+  statusId:"hk-sync-status",
+  hasLocalData:function(value){return Object.keys(value.rooms||{}).length>0||Object.keys(value.log||{}).length>0},
+  getData:function(){return {rooms:data,log:LOG}},
+  isValid:function(value){return value&&typeof value.rooms==="object"&&typeof value.log==="object"},
+  mergeData:function(remote,local){
+    var logs={},dates=Object.keys(remote.log||{}).concat(Object.keys(local.log||{}));
+    dates.forEach(function(date){logs[date]=Object.assign({},remote.log&&remote.log[date]||{},local.log&&local.log[date]||{})});
+    return {rooms:Object.assign({},remote.rooms||{},local.rooms||{}),log:logs};
+  },
+  setData:function(value){
+    data=value.rooms||{};LOG=value.log||{};
+    try{localStorage.setItem(KEY,JSON.stringify(data));localStorage.setItem(LKEY,JSON.stringify(LOG))}catch(e){}
+    build();names();stats();sumRender();avgRender();
+  }
+});
+
+try{if(sessionStorage.getItem("hk_in")==="1")enter()}catch(e){}
+})();
+}
+
+if (document.body.classList.contains('cash-inventory-page')) {
+(function () {
+const denominations=[["$100 bills",100],["$50 bills",50],["$20 bills",20],["$10 bills",10],["$5 bills",5],["$1 bills",1],["Quarters",.25],["Dimes",.10],["Nickels",.05]];
+const defaults=[0,0,4,0,16,33,16,20,20];
+const key='cashInventoryWebsiteV1';
+let state=load();
+function load(){try{let s=JSON.parse(localStorage.getItem(key));if(s){delete s.safeGeneral;s.log=(s.log||[]).filter(l=>!`${l.action||''} ${l.detail||''}`.toLowerCase().includes('general fund')).map(l=>({...l,action:String(l.action||'').replace(/safe \(paid-out fund\)/gi,'Safe'),detail:String(l.detail||'').replace(/safe \(paid-out fund\)/gi,'Safe')}));localStorage.setItem(key,JSON.stringify(s));return s}}catch(e){}return {drawer:{standard:defaults.slice(),actual:Array(9).fill('')},safe:{standard:defaults.slice(),actual:Array(9).fill('')},movements:[],log:[]}}
+function persist(){localStorage.setItem(key,JSON.stringify(state));render()}
+function money(n){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(n)||0)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function titleCase(value){return String(value).toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase())}
+function formatPageText(){let walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode(node){return node.parentElement?.closest('script,style')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT}});while(walker.nextNode())walker.currentNode.nodeValue=titleCase(walker.currentNode.nodeValue);document.querySelectorAll('[placeholder],[aria-label],[title]').forEach(el=>['placeholder','aria-label','title'].forEach(attr=>{if(el.hasAttribute(attr))el.setAttribute(attr,titleCase(el.getAttribute(attr)))}))}
+function sum(arr){return arr.reduce((a,v,i)=>a+(Number(v)||0)*denominations[i][1],0)}
+function log(action,detail){state.log.unshift({time:new Date().toISOString(),action,detail})}
+function makeRows(which){return denominations.map((d,i)=>`<tr><td>${d[0]}</td><td class="num">${money(d[1])}</td><td class="num"><input class="entry" aria-label="${which} ${d[0]} standard count" type="number" min="0" step="1" value="${esc(state[which].standard[i])}" onchange="editCount('${which}','standard',${i},this.value)"></td><td class="num money">${money((Number(state[which].standard[i])||0)*d[1])}</td><td class="num"><input class="entry" aria-label="${which} ${d[0]} actual count" type="number" min="0" step="1" placeholder="-" value="${esc(state[which].actual[i])}" onchange="editCount('${which}','actual',${i},this.value)"></td><td class="num money">${state[which].actual[i]===''?'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â':money((Number(state[which].actual[i])||0)*d[1])}</td></tr>`).join('')+`<tr class="otherrow"><td>Other denominations</td><td colspan="5"><input class="fieldInput" class="other-denominations-input" placeholder="Optional notes (such as $2 coins, rolled coins)" value="${esc(state[which].other||'')}" onchange="editOther('${which}',this.value)"></td></tr>`}
+function editCount(which,type,i,val){state[which][type][i]=val===''?'':Math.max(0,Number(val)||0);log('Count edited',`${which==='drawer'?'Cash drawer':'Safe'} Ãƒâ€šÃ‚Â· ${type==='standard'?'standard':'actual'} count Ãƒâ€šÃ‚Â· ${denominations[i][0]} = ${val===''?'blank':val}`);persist()}
+function editOther(which,val){state[which].other=val;log('Notes edited',`${which==='drawer'?'Cash drawer':'Safe'} Ãƒâ€šÃ‚Â· other denominations notes updated`);persist()}
+function saveCounts(which){log('Inventory saved',`${which==='drawer'?'Cash drawer':'Safe'} saved. Actual total: ${money(sum(state[which].actual))}. Standard total: ${money(sum(state[which].standard))}.`);localStorage.setItem(key,JSON.stringify(state));render();alert(titleCase('Counts saved and change logged.'))}
+function resetActual(which){if(!confirm(titleCase('Clear all actual counts for '+(which==='drawer'?'the cash drawer':'the safe')+'?')))return;state[which].actual=Array(9).fill('');log('Actual counts cleared',which==='drawer'?'Cash drawer actual counts cleared':'Safe actual counts cleared');persist()}
+function render(){['drawer','safe'].forEach(w=>{document.getElementById(w+'Rows').innerHTML=makeRows(w);document.getElementById(w+'Standard').textContent=money(sum(state[w].standard));document.getElementById(w+'Actual').textContent=money(sum(state[w].actual))});document.getElementById('drawerStat').textContent=money(sum(state.drawer.actual));document.getElementById('safeStat').textContent=money(sum(state.safe.actual));document.getElementById('logStat').textContent=state.log.length;
+document.getElementById('movementRows').innerHTML=state.movements.length?state.movements.map(m=>`<tr><td>${esc(m.date)}</td><td>${esc(m.reason)}</td><td>${esc(m.by||'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â')}</td><td><span class="tag">${esc(m.type)}</span></td>${denominations.map((d,i)=>`<td class="num">${Number(m.counts?.[i])||0}</td>`).join('')}<td class="num money">${money(m.total)}</td></tr>`).join(''):'<tr><td colspan="14" class="empty">No cash movements recorded yet.</td></tr>';
+document.getElementById('logEntries').innerHTML=state.log.length?state.log.map(l=>`<div class="log-item"><div class="log-top"><strong>${esc(l.action)}</strong><span class="log-time">${new Date(l.time).toLocaleString()}</span></div><div>${esc(l.detail)}</div></div>`).join(''):'<div class="empty">No changes logged yet. Saved edits will appear here.</div>';formatPageText()}
+function initMoveInputs(){document.getElementById('moveInputs').innerHTML=denominations.map((d,i)=>`<div class="field"><label for="mv${i}">${d[0]} (${money(d[1])})</label><input id="mv${i}" type="number" min="0" step="1" value="0"></div>`).join('');document.getElementById('moveDate').value=new Date().toISOString().slice(0,10)}
+function saveMovement(){let reason=document.getElementById('moveReason').value.trim();if(!reason){alert(titleCase('Please enter a reason for this movement.'));return}let counts=denominations.map((d,i)=>Number(document.getElementById('mv'+i).value)||0);let total=sum(counts);if(!counts.some(n=>n>0)){alert(titleCase('Enter at least one denomination count.'));return}let m={date:document.getElementById('moveDate').value||new Date().toISOString().slice(0,10),reason,by:document.getElementById('moveBy').value.trim(),type:document.getElementById('moveType').value,counts,total:(document.getElementById('moveType').value==='Withdrawal'?-1:1)*total};state.movements.unshift(m);log('Cash movement recorded',`${m.type}: ${money(Math.abs(m.total))} Ãƒâ€šÃ‚Â· ${m.reason} Ãƒâ€šÃ‚Â· ${m.date} Ãƒâ€šÃ‚Â· handled by ${m.by||'not specified'}`);persist();clearMovement();alert(titleCase('Movement saved and change logged.'))}
+function clearMovement(){document.getElementById('moveReason').value='';document.getElementById('moveBy').value='';document.querySelectorAll('#moveInputs input').forEach(x=>x.value=0)}
+async function exportLog(){if(!state.log.length){alert(titleCase('There are no changes to export yet.'));return}try{if(!window.XLSX){await new Promise((resolve,reject)=>{let s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}let rows=[['Timestamp','Action','Details'],...state.log.map(l=>[new Date(l.time),l.action,l.detail])];let ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:25},{wch:28},{wch:90}];let wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Change Log');XLSX.writeFile(wb,'cash-inventory-change-log.xlsx')}catch(e){alert(titleCase('Could not load the XLSX export library. Please check your internet connection and try again.'))}}
+function download(content,name,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();URL.revokeObjectURL(a.href)}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x===b));['inventory','movement','history'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==b.dataset.tab))}));
+initMoveInputs();render();
+function cashHasLocalData(value){
+	return (value.log||[]).length>0||(value.movements||[]).length>0||['drawer','safe'].some(which=>{
+		let counts=value[which];
+		return counts&&(counts.other||JSON.stringify(counts.standard)!==JSON.stringify(defaults)||counts.actual.some(item=>item!==''&&Number(item)!==0));
+	});
+}
+function mergeCashEntries(remote,local){
+	let entries=new Map();
+	[...(remote||[]),...(local||[])].forEach(item=>{
+		let id=item.id||JSON.stringify(item);
+		if(!entries.has(id))entries.set(id,item);
+	});
+	return [...entries.values()].sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
+}
+window.cashInventorySharedSync=createSharedJsonSync({
+	appKey:'cash-inventory',
+	fileName:'Cash_Inventory_Shared.json',
+	buttonId:'cash-sync-connect',
+	statusId:'cash-sync-status',
+	getData:()=>state,
+	hasLocalData:cashHasLocalData,
+	isValid:value=>value&&value.drawer&&value.safe&&Array.isArray(value.movements)&&Array.isArray(value.log),
+	mergeData:(remote,local)=>({
+		...remote,
+		...local,
+		drawer:local.drawer||remote.drawer,
+		safe:local.safe||remote.safe,
+		movements:mergeCashEntries(remote.movements,local.movements),
+		log:mergeCashEntries(remote.log,local.log)
+	}),
+	setData:value=>{state=value;localStorage.setItem(key,JSON.stringify(state));render()}
+});
+window.cashInventorySharedSync.start();
+Object.assign(window,{editCount,editOther,saveCounts,resetActual,saveMovement,clearMovement,exportLog});
+})();
+}

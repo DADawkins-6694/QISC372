@@ -17,4 +17,4 @@ The first connection merges the browser's existing records into its shared file.
 
 ## Publishing
 
-Publish `shared-json-sync.js`, `Housekeeping-Tracker.html`, `cash_inventory_website_updated.html`, `hours-tracking.html`, and `script.js` to the GitHub Pages repository. The folder picker requires a secure page origin (HTTPS) and a supported browser such as Chrome or Edge.
+Publish `styles.css`, `script.js`, `Housekeeping-Tracker.html`, `cash_inventory_website_updated.html`, and `hours-tracking.html` to the GitHub Pages repository. The folder picker requires a secure page origin (HTTPS) and a supported browser such as Chrome or Edge.
