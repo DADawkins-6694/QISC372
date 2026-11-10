@@ -11,6 +11,8 @@
   <button class="site-nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="site-nav-links" title="Open navigation menu"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></button>
   <div class="site-nav-links" id="site-nav-links" hidden>
     <a href="index.html">Home</a>
+    <a href="log-in.html">Log In</a>
+    <a href="hours-tracking.html" aria-current="page">Hours Tracking</a>
     <a href="cash_inventory_website_updated.html">Cash</a>
     <a href="Housekeeping-Tracker.html">Housekeeping</a>
     <button class="site-theme-toggle" type="button" data-action-click="toggleDarkMode" data-theme-toggle aria-pressed="false">Dark Mode: Off</button>
@@ -18,6 +20,18 @@
 </nav>
 <h1>Hours Tracking</h1>
 <p><a href="index.html">Back to Clock In / Out</a></p>
+
+<div class="ot-box" id="currentWeekHoursBox">
+  <h3>Current Business Week Hours</h3>
+  <p id="currentWeekRange"></p>
+  <div class="ot-week-summary" id="currentWeekHours"></div>
+</div>
+
+<div class="ot-box" id="previousWeekHoursBox">
+  <h3>Previous Business Week Hours</h3>
+  <p id="previousWeekRange"></p>
+  <div class="ot-week-summary" id="previousWeekHours"></div>
+</div>
 
 <div class="modal-overlay" id="approvalModalOverlay">
   <div class="modal-box">

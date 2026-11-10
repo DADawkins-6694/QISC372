@@ -114,7 +114,7 @@
     color: #fff;
   }
 
-  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page) {
+  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page):not(.housekeeping-lists-page) {
     --bg: #000;
     --text: #fff;
     --border: #3a3a3a;
@@ -127,22 +127,22 @@
     color-scheme: dark;
   }
 
-  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page) input,
-  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page) select,
-  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page) textarea {
+  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page):not(.housekeeping-lists-page) input,
+  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page):not(.housekeeping-lists-page) select,
+  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page):not(.housekeeping-lists-page) textarea {
     background: #171717;
     color: #fff;
     border-color: #444;
   }
 
-  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page) thead th {
+  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page):not(.housekeeping-lists-page) thead th {
     background: #101010;
     color: #fff;
   }
 
-  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page) .modal-box,
-  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page) .autosave-box,
-  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page) .filter-box {
+  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page):not(.housekeeping-lists-page) .modal-box,
+  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page):not(.housekeeping-lists-page) .autosave-box,
+  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page):not(.housekeeping-lists-page) .filter-box {
     background: #151515;
     color: #fff;
   }
@@ -153,6 +153,111 @@
 
   .login-page .admin-box h2 {
     color: #000;
+  }
+
+  body.housekeeping-lists-page {
+    min-height: 100vh;
+    padding: 0;
+    background: #fff;
+    color: #000;
+  }
+
+  .housekeeping-lists-page .site-nav {
+    margin: 0;
+    border-bottom: 1px solid #000;
+    background: #fff;
+    color: #000;
+  }
+
+  .housekeeping-lists-page .site-nav-toggle {
+    background: #fff;
+  }
+
+  .housekeeping-lists-page .site-nav-toggle span {
+    background: #000;
+  }
+
+  .housekeeping-lists-page .site-nav-links a {
+    color: #000;
+  }
+
+  .housekeeping-lists-page .site-nav-links a:hover,
+  .housekeeping-lists-page .site-nav-links a:focus-visible,
+  .housekeeping-lists-page .site-nav-links a[aria-current="page"] {
+    background: #eee;
+    color: #000;
+  }
+
+  .housekeeping-lists-main {
+    width: min(900px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 28px 0 56px;
+  }
+
+  .housekeeping-lists-page h1,
+  .housekeeping-lists-page h2,
+  .housekeeping-lists-page p,
+  .housekeeping-lists-page label {
+    color: #000;
+    text-align: left;
+  }
+
+  .housekeeping-lists-card {
+    max-width: 520px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #000;
+    background: #fff;
+  }
+
+  .housekeeping-lists-page input {
+    background: #fff;
+    color: #000;
+    border: 1px solid #000;
+  }
+
+  .housekeeping-lists-page button {
+    padding: 8px 12px;
+    border: 1px solid #000;
+    border-radius: 4px;
+    background: #fff;
+    color: #000;
+    cursor: pointer;
+  }
+
+  .housekeeping-lists-page button:hover {
+    background: #eee;
+  }
+
+  #housekeeping-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    color: #000;
+  }
+
+  #housekeeping-list-table th,
+  #housekeeping-list-table td {
+    padding: 8px;
+    border: 1px solid #000;
+    background: #fff;
+    color: #000;
+    text-align: left;
+  }
+
+  #housekeeping-list-table input {
+    width: 100%;
+  }
+
+  .housekeeping-list-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 14px 0;
+  }
+
+  .housekeeping-list-status {
+    min-height: 1.4em;
   }
 
   h1 {
@@ -169,7 +274,7 @@
     border-radius: 8px;
   }
 
-  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page) .tracker-logo {
+  body.dark-mode:not(.cash-inventory-page):not(.housekeeping-page):not(.housekeeping-lists-page) .tracker-logo {
     padding: 5px;
     border-radius: 12px;
     background: #fff;
@@ -977,6 +1082,7 @@ section.sec{width:40%}
 @media (max-width:700px){section.sec{width:100%}}
 .src{font-weight:600}
 .src a{color:var(--brass);text-decoration:underline;word-break:break-all}
+.hk-list-link{text-decoration:none;display:inline-block}
 #v-avg th,#v-avg td{white-space:nowrap}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 :scope{padding:0}

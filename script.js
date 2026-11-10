@@ -1,7 +1,7 @@
 const DARK_MODE_KEY = 'qi_site_dark_mode';
 
 function setDarkMode(enabled) {
-  if (document.body.classList.contains('housekeeping-page')) return;
+  if (document.body.classList.contains('housekeeping-page') || document.body.classList.contains('housekeeping-lists-page')) return;
   document.body.classList.toggle('dark-mode', enabled);
   try { localStorage.setItem(DARK_MODE_KEY, enabled ? 'true' : 'false'); } catch (error) {}
   document.querySelectorAll('[data-theme-toggle]').forEach(button => {
@@ -15,7 +15,7 @@ function toggleDarkMode() {
 }
 
 try {
-  if (!document.body.classList.contains('housekeeping-page')) {
+  if (!document.body.classList.contains('housekeeping-page') && !document.body.classList.contains('housekeeping-lists-page')) {
     setDarkMode(localStorage.getItem(DARK_MODE_KEY) === 'true');
   }
 } catch (error) {
@@ -423,51 +423,6 @@ function scheduleSharedDataSave() {
     renderTable();
   }
 
-  // Lets an admin manually clock someone out from the "Currently Clocked In"
-  // list, gated by the same username/password used for note-editing access.
-  // Credentials are entered in the modal below (masked password field)
-  // rather than a prompt(), which cannot mask input.
-  let pendingClockOutName = null;
-
-  function openAdminClockOutModal(name) {
-    pendingClockOutName = name;
-    document.getElementById('clockOutModalName').textContent = `Clock out: ${name}`;
-    document.getElementById('clockOutUser').value = '';
-    document.getElementById('clockOutPass').value = '';
-    document.getElementById('clockOutModalStatus').textContent = '';
-    document.getElementById('clockOutModalOverlay').style.display = 'flex';
-    document.getElementById('clockOutUser').focus();
-  }
-
-  function closeAdminClockOutModal() {
-    document.getElementById('clockOutModalOverlay').style.display = 'none';
-    pendingClockOutName = null;
-  }
-
-  function submitAdminClockOut() {
-    if (!pendingClockOutName) return;
-    const user = document.getElementById('clockOutUser').value.trim();
-    const pass = document.getElementById('clockOutPass').value;
-    if (user !== ADMIN_USERNAME || pass !== ADMIN_PASSWORD) {
-      document.getElementById('clockOutModalStatus').textContent = 'Incorrect username or password.';
-      return;
-    }
-    addRecord(pendingClockOutName, 'Out', 'Clocked out by admin');
-    closeAdminClockOutModal();
-  }
-
-  addListenerIfPresent('clockOutModalOverlay', 'click', e => {
-    if (e.target.id === 'clockOutModalOverlay') closeAdminClockOutModal();
-  });
-  addListenerIfPresent('clockOutPass', 'keydown', e => {
-    if (e.key === 'Enter') submitAdminClockOut();
-    if (e.key === 'Escape') closeAdminClockOutModal();
-  });
-  addListenerIfPresent('clockOutUser', 'keydown', e => {
-    if (e.key === 'Enter') document.getElementById('clockOutPass').focus();
-    if (e.key === 'Escape') closeAdminClockOutModal();
-  });
-
   // The Clock Out dropdown mirrors the "Currently Clocked In" list, so
   // nobody can be clocked out before they have clocked in.
   function populateClockOutDropdown(openRows) {
@@ -499,6 +454,9 @@ function scheduleSharedDataSave() {
     const rows = getOpenClockIns(records).sort((a, b) => a.clockIn - b.clockIn);
     populateClockOutDropdown(rows);
 
+    renderCurrentWeekHours(records);
+    renderPreviousWeekHours(records);
+
     const listEl = document.getElementById('currentlyInList');
     const countEl = document.getElementById('currentlyInCount');
     if (!listEl || !countEl) return;
@@ -513,17 +471,67 @@ function scheduleSharedDataSave() {
         const inStr = new Date(r.clockIn).toLocaleString();
         const elapsedHrs = ((Date.now() - r.clockIn) / 3600000).toFixed(2);
         row.innerHTML = `<span><strong>${escapeHtml(r.name)}</strong> - in since ${inStr}</span><span class="badge badge-in">IN</span> <span>${elapsedHrs} h so far</span>`;
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'btn-clockout';
-        btn.textContent = 'Clock Out';
-        btn.addEventListener('click', () => openAdminClockOutModal(r.name));
-        row.appendChild(btn);
         listEl.appendChild(row);
       });
     }
 
     countEl.textContent = `${rows.length} currently clocked in`;
+  }
+
+  function renderCurrentWeekHours(records) {
+    const weekStartMs = getMondayOfWeek(Date.now());
+    const weekEndMs = weekStartMs + 7 * 24 * 60 * 60 * 1000 - 1;
+    renderBusinessWeekHours(records, weekStartMs, weekEndMs, 'currentWeekRange', 'currentWeekHours', 'No completed shifts were recorded for the current business week.');
+  }
+
+  function renderPreviousWeekHours(records) {
+    const weekEndMs = getMondayOfWeek(Date.now()) - 1;
+    const weekStartMs = weekEndMs - 7 * 24 * 60 * 60 * 1000 + 1;
+    renderBusinessWeekHours(records, weekStartMs, weekEndMs, 'previousWeekRange', 'previousWeekHours', 'No completed shifts were recorded for the previous business week.');
+  }
+
+  function renderBusinessWeekHours(records, weekStartMs, weekEndMs, rangeId, summaryId, emptyMessage) {
+    const rangeEl = document.getElementById(rangeId);
+    const summaryEl = document.getElementById(summaryId);
+    if (!rangeEl || !summaryEl) return;
+
+    const dateFormat = { month: 'short', day: 'numeric', year: 'numeric' };
+    const weekStart = new Date(weekStartMs);
+    const weekEnd = new Date(weekEndMs);
+    rangeEl.textContent = `${weekStart.toLocaleDateString(undefined, dateFormat)} - ${weekEnd.toLocaleDateString(undefined, dateFormat)}`;
+
+    const totals = Array.from(computeWeeklyHours(records, weekStartMs, weekEndMs).entries())
+      .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: 'base' }));
+    summaryEl.innerHTML = '';
+
+    if (totals.length === 0) {
+      summaryEl.innerHTML = `<div class="empty-note">${emptyMessage}</div>`;
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.innerHTML = '<thead><tr><th>Employee</th><th>Hours</th></tr></thead>';
+    const tbody = document.createElement('tbody');
+    let combinedHours = 0;
+    totals.forEach(([name, hours]) => {
+      combinedHours += hours;
+      const row = document.createElement('tr');
+      const nameCell = document.createElement('td');
+      const hoursCell = document.createElement('td');
+      nameCell.textContent = name;
+      hoursCell.textContent = `${hours.toFixed(2)} h`;
+      row.append(nameCell, hoursCell);
+      tbody.appendChild(row);
+    });
+    const totalRow = document.createElement('tr');
+    const totalLabel = document.createElement('th');
+    const totalValue = document.createElement('th');
+    totalLabel.textContent = 'Combined Total';
+    totalValue.textContent = `${combinedHours.toFixed(2)} h`;
+    totalRow.append(totalLabel, totalValue);
+    tbody.appendChild(totalRow);
+    table.appendChild(tbody);
+    summaryEl.appendChild(table);
   }
 
   function renderOvertimeAlerts() {
@@ -1096,7 +1104,7 @@ function scheduleSharedDataSave() {
           ? `<input type="text" class="notes-input" data-key="${escapeHtml(r.key)}" value="${escapeHtml(r.notes)}" placeholder="Add a note" onchange="handleNoteChange(this)">`
           : escapeHtml(r.notes);
 
-        const deleteCell = `<div class="row-actions"><button type="button" class="btn-add-row" title="Add a new shift">Add</button><button type="button" class="btn-delete-row" onclick="handleAdminDeleteRow('${r.clockInId || ''}', '${r.clockOutId || ''}')">Delete</button></div>`;
+        const deleteCell = `<div class="row-actions"><button type="button" class="btn-delete-row" onclick="handleAdminDeleteRow('${r.clockInId || ''}', '${r.clockOutId || ''}')">Delete</button></div>`;
 
         const approvalId = r.clockInId || r.clockOutId;
         const isComplete = !!(r.clockInId && r.clockOutId);
@@ -1114,7 +1122,6 @@ function scheduleSharedDataSave() {
           <td>${notesCell}</td>
           <td>${deleteCell}</td>
         `;
-        tr.querySelector('.btn-add-row').addEventListener('click', () => openAddShiftModal(r.name));
         tbody.appendChild(tr);
       });
     }
@@ -2499,9 +2506,133 @@ function scheduleSharedDataSave() {
     if (button) button.addEventListener('click', chooseFolder);
     global.addEventListener('beforeunload', disconnect);
 
-    return { start, connect: chooseFolder, connectHandle: handle => connect(handle, true), disconnect, sync: syncOnce };
+    return { start, connect: chooseFolder, connectHandle: handle => connect(handle, true), disconnect, sync: syncOnce, isConnected: () => connected };
   };
 })(window);
+
+const HOUSEKEEPER_OPTIONS_KEY = 'housekeeping_dropdown_values_v1';
+const DEFAULT_HOUSEKEEPER_OPTIONS = ['1', '2', '3', '4', '5', '6', '7'];
+
+function loadHousekeeperOptions() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(HOUSEKEEPER_OPTIONS_KEY) || 'null');
+    if (Array.isArray(saved)) {
+      const options = [...new Set(saved.map(value => String(value).trim()).filter(Boolean))];
+      if (options.length) return options;
+    }
+  } catch (error) {}
+  return DEFAULT_HOUSEKEEPER_OPTIONS.slice();
+}
+
+function storeHousekeeperOptions(options) {
+  const values = [...new Set(options.map(value => String(value).trim()).filter(Boolean))];
+  localStorage.setItem(HOUSEKEEPER_OPTIONS_KEY, JSON.stringify(values));
+  return values;
+}
+
+function mergeHousekeepingSyncData(remote, local) {
+  const dates = new Set([...Object.keys(remote.log || {}), ...Object.keys(local.log || {})]);
+  const log = {};
+  dates.forEach(date => {
+    log[date] = Object.assign({}, remote.log && remote.log[date] || {}, local.log && local.log[date] || {});
+  });
+  return {
+    rooms: Object.assign({}, remote.rooms || {}, local.rooms || {}),
+    log,
+    housekeepers: local.housekeepers || remote.housekeepers || DEFAULT_HOUSEKEEPER_OPTIONS.slice()
+  };
+}
+
+function setHousekeepingSyncData(value) {
+  localStorage.setItem('hk_log_v2', JSON.stringify(value.rooms || {}));
+  localStorage.setItem('hk_saved_log_v1', JSON.stringify(value.log || {}));
+  storeHousekeeperOptions(value.housekeepers || DEFAULT_HOUSEKEEPER_OPTIONS);
+}
+
+function renderHousekeeperListEditor(options) {
+  const rows = document.getElementById('housekeeping-list-rows');
+  if (!rows) return;
+  rows.innerHTML = options.map((value, index) =>
+    `<tr><td><input class="housekeeping-list-value" aria-label="Dropdown value ${index + 1}" value="${escapeHtml(value)}"></td><td><button type="button" data-action-click="removeHousekeeperListOption" data-action-args="${index}">Remove</button></td></tr>`
+  ).join('');
+}
+
+function loginHousekeepingListEditor() {
+  const username = document.getElementById('housekeeping-list-username').value.trim();
+  const password = document.getElementById('housekeeping-list-password').value;
+  const status = document.getElementById('housekeeping-list-login-status');
+  if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+    status.textContent = 'Username or password is incorrect.';
+    return;
+  }
+  document.getElementById('housekeeping-list-login').hidden = true;
+  document.getElementById('housekeeping-list-editor').hidden = false;
+  document.getElementById('housekeeping-list-password').value = '';
+  renderHousekeeperListEditor(loadHousekeeperOptions());
+  if (window.housekeepingListSharedSync) window.housekeepingListSharedSync.start();
+}
+
+function currentHousekeeperListEditorValues() {
+  return Array.from(document.querySelectorAll('.housekeeping-list-value'), input => input.value);
+}
+
+function addHousekeeperListOption() {
+  renderHousekeeperListEditor(currentHousekeeperListEditorValues().concat(''));
+  const inputs = document.querySelectorAll('.housekeeping-list-value');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function removeHousekeeperListOption(index) {
+  const values = currentHousekeeperListEditorValues();
+  values.splice(Number(index), 1);
+  renderHousekeeperListEditor(values);
+}
+
+async function saveHousekeeperOptions() {
+  const status = document.getElementById('housekeeping-list-status');
+  try {
+    const values = storeHousekeeperOptions(currentHousekeeperListEditorValues());
+    renderHousekeeperListEditor(values);
+    if (window.housekeepingListSharedSync && window.housekeepingListSharedSync.isConnected()) {
+      await window.housekeepingListSharedSync.sync();
+      status.textContent = 'Dropdown values saved and synced.';
+    } else {
+      status.textContent = 'Dropdown values saved in this browser. Connect the shared folder to sync across devices.';
+    }
+  } catch (error) {
+    status.textContent = error.message;
+  }
+}
+
+function logoutHousekeeperListEditor() {
+  if (window.housekeepingListSharedSync) window.housekeepingListSharedSync.disconnect();
+  document.getElementById('housekeeping-list-editor').hidden = true;
+  document.getElementById('housekeeping-list-login').hidden = false;
+  document.getElementById('housekeeping-list-username').value = '';
+  document.getElementById('housekeeping-list-password').value = '';
+  document.getElementById('housekeeping-list-login-status').textContent = '';
+}
+
+if (document.body.classList.contains('housekeeping-lists-page')) {
+  window.housekeepingListSharedSync = createSharedJsonSync({
+    appKey: 'housekeeping',
+    fileName: 'Housekeeping_Tracker_Shared.json',
+    buttonId: 'housekeeping-list-sync-connect',
+    statusId: 'housekeeping-list-status',
+    hasLocalData: value => Object.keys(value.rooms || {}).length > 0 || Object.keys(value.log || {}).length > 0 || JSON.stringify(value.housekeepers || DEFAULT_HOUSEKEEPER_OPTIONS) !== JSON.stringify(DEFAULT_HOUSEKEEPER_OPTIONS),
+    getData: () => ({
+      rooms: JSON.parse(localStorage.getItem('hk_log_v2') || '{}'),
+      log: JSON.parse(localStorage.getItem('hk_saved_log_v1') || '{}'),
+      housekeepers: loadHousekeeperOptions()
+    }),
+    isValid: value => value && typeof value.rooms === 'object' && typeof value.log === 'object' && (!value.housekeepers || Array.isArray(value.housekeepers)),
+    mergeData: mergeHousekeepingSyncData,
+    setData: value => {
+      setHousekeepingSyncData(value);
+      renderHousekeeperListEditor(loadHousekeeperOptions());
+    }
+  });
+}
 
 if (document.body.classList.contains('housekeeping-page')) {
 (function () {
@@ -2515,7 +2646,13 @@ var SECTIONS=[
  ["Econo 2nd Floor",rng(228,252)]
 ];
 var KEY="hk_log_v2", LKEY="hk_saved_log_v1", data={}, LOG={};
-var HK=["a","b","c","d","e","f"];
+var HK=loadHousekeeperOptions();
+window.addEventListener("storage",function(event){
+  if(event.key!==HOUSEKEEPER_OPTIONS_KEY)return;
+  HK=loadHousekeeperOptions();
+  var app=document.getElementById("app");
+  if(app&&!app.classList.contains("hide")){build();names();stats()}
+});
 function sel(v,n){var l=HK.indexOf(v)<0&&v?HK.concat([v]):HK;
   return '<select data-f="n" aria-label="Housekeeper for room '+n+'"><option value="">Select</option>'+l.map(function(x){return '<option value="'+esc(x)+'"'+(x==v?' selected':'')+'>'+esc(x)+'</option>'}).join("")+'</select>'}
 function $(id){return document.getElementById(id)}
@@ -2643,16 +2780,12 @@ window.housekeepingSharedSync=createSharedJsonSync({
   fileName:"Housekeeping_Tracker_Shared.json",
   buttonId:"hk-sync-connect",
   statusId:"hk-sync-status",
-  hasLocalData:function(value){return Object.keys(value.rooms||{}).length>0||Object.keys(value.log||{}).length>0},
-  getData:function(){return {rooms:data,log:LOG}},
-  isValid:function(value){return value&&typeof value.rooms==="object"&&typeof value.log==="object"},
-  mergeData:function(remote,local){
-    var logs={},dates=Object.keys(remote.log||{}).concat(Object.keys(local.log||{}));
-    dates.forEach(function(date){logs[date]=Object.assign({},remote.log&&remote.log[date]||{},local.log&&local.log[date]||{})});
-    return {rooms:Object.assign({},remote.rooms||{},local.rooms||{}),log:logs};
-  },
+  hasLocalData:function(value){return Object.keys(value.rooms||{}).length>0||Object.keys(value.log||{}).length>0||JSON.stringify(value.housekeepers||DEFAULT_HOUSEKEEPER_OPTIONS)!==JSON.stringify(DEFAULT_HOUSEKEEPER_OPTIONS)},
+  getData:function(){return {rooms:data,log:LOG,housekeepers:HK}},
+  isValid:function(value){return value&&typeof value.rooms==="object"&&typeof value.log==="object"&&(!value.housekeepers||Array.isArray(value.housekeepers))},
+  mergeData:mergeHousekeepingSyncData,
   setData:function(value){
-    data=value.rooms||{};LOG=value.log||{};
+    data=value.rooms||{};LOG=value.log||{};HK=storeHousekeeperOptions(value.housekeepers||DEFAULT_HOUSEKEEPER_OPTIONS);
     try{localStorage.setItem(KEY,JSON.stringify(data));localStorage.setItem(LKEY,JSON.stringify(LOG))}catch(e){}
     build();names();stats();sumRender();avgRender();
   }
@@ -2660,6 +2793,92 @@ window.housekeepingSharedSync=createSharedJsonSync({
 
 try{if(sessionStorage.getItem("hk_in")==="1")enter()}catch(e){}
 })();
+}
+
+if (document.body.classList.contains('housekeeping-lists-page')) {
+  function renderHousekeeperListEditor(options) {
+    const rows = document.getElementById('housekeeping-list-rows');
+    if (!rows) return;
+    rows.innerHTML = options.map((value, index) =>
+      `<tr><td><input class="housekeeping-list-value" aria-label="Dropdown value ${index + 1}" value="${escapeHtml(value)}"></td><td><button type="button" data-action-click="removeHousekeeperListOption" data-action-args="${index}">Remove</button></td></tr>`
+    ).join('');
+  }
+
+  function loginHousekeepingListEditor() {
+    const username = document.getElementById('housekeeping-list-username').value.trim();
+    const password = document.getElementById('housekeeping-list-password').value;
+    const status = document.getElementById('housekeeping-list-login-status');
+    if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+      status.textContent = 'Username or password is incorrect.';
+      return;
+    }
+    document.getElementById('housekeeping-list-login').hidden = true;
+    document.getElementById('housekeeping-list-editor').hidden = false;
+    document.getElementById('housekeeping-list-password').value = '';
+    renderHousekeeperListEditor(loadHousekeeperOptions());
+    window.housekeepingListSharedSync.start();
+  }
+
+  function currentHousekeeperListEditorValues() {
+    return Array.from(document.querySelectorAll('.housekeeping-list-value'), input => input.value);
+  }
+
+  function addHousekeeperListOption() {
+    renderHousekeeperListEditor(currentHousekeeperListEditorValues().concat(''));
+    const inputs = document.querySelectorAll('.housekeeping-list-value');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }
+
+  function removeHousekeeperListOption(index) {
+    const values = currentHousekeeperListEditorValues();
+    values.splice(Number(index), 1);
+    renderHousekeeperListEditor(values);
+  }
+
+  async function saveHousekeeperOptions() {
+    const status = document.getElementById('housekeeping-list-status');
+    try {
+      const values = storeHousekeeperOptions(currentHousekeeperListEditorValues());
+      renderHousekeeperListEditor(values);
+      if (window.housekeepingListSharedSync.isConnected()) {
+        await window.housekeepingListSharedSync.sync();
+        status.textContent = 'Dropdown values saved and synced.';
+      } else {
+        status.textContent = 'Dropdown values saved in this browser. Connect the shared folder to sync across devices.';
+      }
+    } catch (error) {
+      status.textContent = error.message;
+    }
+  }
+
+  function logoutHousekeeperListEditor() {
+    window.housekeepingListSharedSync.disconnect();
+    document.getElementById('housekeeping-list-editor').hidden = true;
+    document.getElementById('housekeeping-list-login').hidden = false;
+    document.getElementById('housekeeping-list-username').value = '';
+    document.getElementById('housekeeping-list-password').value = '';
+    document.getElementById('housekeeping-list-login-status').textContent = '';
+  }
+
+  window.housekeepingListSharedSync = createSharedJsonSync({
+    appKey: 'housekeeping',
+    fileName: 'Housekeeping_Tracker_Shared.json',
+    buttonId: 'housekeeping-list-sync-connect',
+    statusId: 'housekeeping-list-status',
+    hasLocalData: value => Object.keys(value.rooms || {}).length > 0 || Object.keys(value.log || {}).length > 0 || JSON.stringify(value.housekeepers || DEFAULT_HOUSEKEEPER_OPTIONS) !== JSON.stringify(DEFAULT_HOUSEKEEPER_OPTIONS),
+    getData: () => ({
+      rooms: JSON.parse(localStorage.getItem('hk_log_v2') || '{}'),
+      log: JSON.parse(localStorage.getItem('hk_saved_log_v1') || '{}'),
+      housekeepers: loadHousekeeperOptions()
+    }),
+    isValid: value => value && typeof value.rooms === 'object' && typeof value.log === 'object' && (!value.housekeepers || Array.isArray(value.housekeepers)),
+    mergeData: mergeHousekeepingSyncData,
+    setData: value => {
+      setHousekeepingSyncData(value);
+      renderHousekeeperListEditor(loadHousekeeperOptions());
+    }
+  });
+  Object.assign(window, { loginHousekeepingListEditor, addHousekeeperListOption, removeHousekeeperListOption, saveHousekeeperOptions, logoutHousekeeperListEditor });
 }
 
 if (document.body.classList.contains('cash-inventory-page')) {
@@ -2695,15 +2914,15 @@ function cashHasLocalData(value){
 	return (value.log||[]).length>0||(value.movements||[]).length>0||['drawer','safe'].some(which=>{
 		let counts=value[which];
 		return counts&&(counts.other||JSON.stringify(counts.standard)!==JSON.stringify(defaults)||counts.actual.some(item=>item!==''&&Number(item)!==0));
-	});
+  });
 }
 function mergeCashEntries(remote,local){
-	let entries=new Map();
-	[...(remote||[]),...(local||[])].forEach(item=>{
-		let id=item.id||JSON.stringify(item);
-		if(!entries.has(id))entries.set(id,item);
-	});
-	return [...entries.values()].sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
+  let entries=new Map();
+  [...(remote||[]),...(local||[])].forEach(item=>{
+    let id=item.id||JSON.stringify(item);
+    if(!entries.has(id))entries.set(id,item);
+  });
+  return [...entries.values()].sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
 }
 window.cashInventorySharedSync=createSharedJsonSync({
 	appKey:'cash-inventory',

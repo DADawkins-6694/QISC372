@@ -11,6 +11,8 @@
     <button class="site-nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="site-nav-links" title="Open navigation menu"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></button>
     <div class="site-nav-links" id="site-nav-links" hidden>
       <a href="index.html" aria-current="page">Home</a>
+      <a href="log-in.html">Log In</a>
+      <a href="hours-tracking.html">Hours Tracking</a>
       <a href="cash_inventory_website_updated.html">Cash</a>
       <a href="Housekeeping-Tracker.html">Housekeeping</a>
       <button class="site-theme-toggle" type="button" data-action-click="toggleDarkMode" data-theme-toggle aria-pressed="false">Dark Mode: Off</button>
@@ -71,26 +73,6 @@
     </p>
     <div class="alert-list" id="currentlyInList"></div>
     <div class="ot-week-summary" id="currentlyInCount"></div>
-  </div>
-
-  <div class="modal-overlay" id="clockOutModalOverlay" >
-    <div class="modal-box">
-      <h3>Admin Clock Out</h3>
-      <p id="clockOutModalName"></p>
-      <div class="field">
-        <label for="clockOutUser">Username</label>
-        <input type="text" id="clockOutUser" autocomplete="off">
-      </div>
-      <div class="field">
-        <label for="clockOutPass">Password</label>
-        <input type="password" id="clockOutPass" autocomplete="off">
-      </div>
-      <div class="status-msg error" id="clockOutModalStatus"></div>
-      <div class="modal-actions">
-        <button class="btn-out" data-action-click="submitAdminClockOut">Clock Out</button>
-        <button class="btn-cancel" data-action-click="closeAdminClockOutModal">Cancel</button>
-      </div>
-    </div>
   </div>
 
   <div class="modal-overlay" id="approvalModalOverlay" >

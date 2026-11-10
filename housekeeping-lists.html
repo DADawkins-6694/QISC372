@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Housekeeping Dropdown Lists</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="housekeeping-lists-page">
+<nav class="site-nav" aria-label="Main navigation">
+  <button class="site-nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="site-nav-links" title="Open navigation menu"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></button>
+  <div class="site-nav-links" id="site-nav-links" hidden>
+    <a href="index.html">Home</a>
+    <a href="log-in.html">Log In</a>
+    <a href="hours-tracking.html">Hours Tracking</a>
+    <a href="cash_inventory_website_updated.html">Cash</a>
+    <a href="Housekeeping-Tracker.html">Housekeeping</a>
+    <a href="housekeeping-lists.html" aria-current="page">Housekeeper Lists</a>
+  </div>
+</nav>
+<main class="housekeeping-lists-main">
+  <section id="housekeeping-list-login" class="housekeeping-lists-card">
+    <h1>Housekeeping Dropdown Lists</h1>
+    <p>Sign in with the Editing Access username and password to manage the values used in every room dropdown.</p>
+    <form id="housekeeping-list-login-form" data-action-submit="loginHousekeepingListEditor">
+      <label for="housekeeping-list-username">Username</label>
+      <input id="housekeeping-list-username" type="text" autocomplete="username" required>
+      <label for="housekeeping-list-password">Password</label>
+      <input id="housekeeping-list-password" type="password" autocomplete="current-password" required>
+      <div id="housekeeping-list-login-status" class="housekeeping-list-status" role="status"></div>
+      <button type="submit">Sign In</button>
+    </form>
+  </section>
+
+  <section id="housekeeping-list-editor" hidden>
+    <h1>Housekeeping Dropdown Values</h1>
+    <p>Values saved here populate the housekeeper dropdown for every room.</p>
+    <div class="housekeeping-list-actions">
+      <button type="button" data-action-click="addHousekeeperListOption">Add Value</button>
+      <button type="button" data-action-click="saveHousekeeperOptions">Save List</button>
+      <button type="button" data-action-click="logoutHousekeeperListEditor">Sign Out</button>
+      <button id="housekeeping-list-sync-connect" type="button">Connect Google Drive Folder</button>
+    </div>
+    <p id="housekeeping-list-status" class="housekeeping-list-status" role="status"></p>
+    <table id="housekeeping-list-table">
+      <thead><tr><th>Dropdown Value</th><th>Action</th></tr></thead>
+      <tbody id="housekeeping-list-rows"></tbody>
+    </table>
+    <p><a href="Housekeeping-Tracker.html">Back to Housekeeping Tracker</a></p>
+  </section>
+</main>
+<script src="script.js"></script>
+</body>
+</html>
